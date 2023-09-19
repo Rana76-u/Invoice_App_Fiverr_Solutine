@@ -7,14 +7,14 @@ import 'package:lottie/lottie.dart';
 
 import '../../Components/bottom_nav_bar.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class Profile extends StatefulWidget {
+  const Profile({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<Profile> createState() => _ProfileState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _ProfileState extends State<Profile> {
 
   String chosenVendorType = '';
   final ImagePicker _imagePicker = ImagePicker();
@@ -35,9 +35,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Text(
         text,
         style: const TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          overflow: TextOverflow.clip
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            overflow: TextOverflow.clip
         ),
       ),
     );
@@ -52,7 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             fontSize: 13,
             fontWeight: FontWeight.bold,
             overflow: TextOverflow.clip,
-          color: Colors.grey
+            color: Colors.grey
         ),
       ),
     );
@@ -69,11 +69,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               SizedBox(height: MediaQuery.of(context).size.height*0.04,),
 
-              //Welcome
+              //Edit Profile
               const Padding(
                 padding: EdgeInsets.only(left: 3),
                 child: Text(
-                  'Register',
+                  'Edit Profile',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -125,7 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                                Icons.business,
+                              Icons.business,
                               color: chosenVendorType == 'Shop' ? Colors.white : Colors.purple,
                             ),
                             Text(
@@ -134,7 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
-                                color: chosenVendorType == 'Shop' ? Colors.white : Colors.purple
+                                  color: chosenVendorType == 'Shop' ? Colors.white : Colors.purple
                               ),
                             )
                           ],
@@ -175,8 +175,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                                Icons.person_rounded,
-                                color: chosenVendorType == 'Individual' ? Colors.white : Colors.blue,
+                              Icons.person_rounded,
+                              color: chosenVendorType == 'Individual' ? Colors.white : Colors.blue,
                             ),
                             Text(
                               'Individual',
@@ -202,46 +202,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
               //Chosen Image
               GestureDetector(
                 onTap: () async {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return  AlertDialog(
-                          title: const Text('Pick Image From'),
-                          content: const Text('Choose One'),
-                          actions: [
-                            // The "Camera" button
-                            TextButton(
-                                onPressed: () async {
-                                  image = await _imagePicker.pickImage(source: ImageSource.camera);
-                                  setState(() {
-                                    // Close the dialog
-                                    Navigator.of(context).pop();
-                                  });
-                                },
-                                child: const Text('Camera')),
-                            TextButton(
-                                onPressed: () async {
-                                  image = await _imagePicker.pickImage(source: ImageSource.gallery);
-                                  setState(() {
-                                    // Close the dialog
-                                    Navigator.of(context).pop();
-                                  });
-                                },
-                                child: const Text('Gallery')
-                            ),
-                            TextButton(
-                                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return  AlertDialog(
+                        title: const Text('Pick Image From'),
+                        content: const Text('Choose One'),
+                        actions: [
+                          // The "Camera" button
+                          TextButton(
+                              onPressed: () async {
+                                image = await _imagePicker.pickImage(source: ImageSource.camera);
+                                setState(() {
                                   // Close the dialog
                                   Navigator.of(context).pop();
-                                },
-                                child: const Text('Cancel')
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                    setState(() {});
-                  },
+                                });
+                              },
+                              child: const Text('Camera')),
+                          TextButton(
+                              onPressed: () async {
+                                image = await _imagePicker.pickImage(source: ImageSource.gallery);
+                                setState(() {
+                                  // Close the dialog
+                                  Navigator.of(context).pop();
+                                });
+                              },
+                              child: const Text('Gallery')
+                          ),
+                          TextButton(
+                              onPressed: () {
+                                // Close the dialog
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Cancel')
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  setState(() {});
+                },
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width,//150, 0.38
                   height: 181,
@@ -266,23 +266,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       //black overlay
                       Positioned(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
-                          child: Container(
-                            height: 181,
-                            width: MediaQuery.of(context).size.width,
-                            color: Colors.black.withOpacity(0.3),
-                            child: const Padding(
-                              padding: EdgeInsets.only(top: 83),
-                              child: Text(
-                                'Click to Change/Upload Image',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold
+                            borderRadius: BorderRadius.circular(15),
+                            child: Container(
+                              height: 181,
+                              width: MediaQuery.of(context).size.width,
+                              color: Colors.black.withOpacity(0.3),
+                              child: const Padding(
+                                padding: EdgeInsets.only(top: 83),
+                                child: Text(
+                                  'Click to Change/Upload Image',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold
+                                  ),
                                 ),
                               ),
-                            ),
-                          )
+                            )
                         ),
                       ),
                     ],
@@ -292,7 +292,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               //Type in Name*
               Padding(
-                padding: const EdgeInsets.only(top: 15, bottom: 5),
+                  padding: const EdgeInsets.only(top: 15, bottom: 5),
                   child: textWidget('Type in Name*')
               ),
               //Name text field
@@ -305,7 +305,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderSide: BorderSide(color: Colors.green),
                     ),
                     enabledBorder:  OutlineInputBorder(
-                      borderSide: BorderSide.none,
+                        borderSide: BorderSide.none,
                         borderRadius: BorderRadius.circular(10)
                     ),
                     prefixIcon: const Icon(
@@ -317,7 +317,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: "Enter Shop/Company/Individual Name",
                     labelStyle: const TextStyle(
                         color: Colors.green,
-                      fontSize: 14
+                        fontSize: 14
                     ),
                   ),
                   cursorColor: Colors.green,
@@ -569,9 +569,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       if(chosenVendorType == ''){
                         messenger.showSnackBar(
-                          const SnackBar(content: Text(
-                            'Choose A Vendor Type'
-                          ))
+                            const SnackBar(content: Text(
+                                'Choose A Vendor Type'
+                            ))
                         );
                       }
                       else if(image == null){
@@ -584,7 +584,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       else if(shopNameController.text.isEmpty){
                         messenger.showSnackBar(
                             const SnackBar(content: Text(
-                                'Name Required',
+                              'Name Required',
                             ))
                         );
                       }

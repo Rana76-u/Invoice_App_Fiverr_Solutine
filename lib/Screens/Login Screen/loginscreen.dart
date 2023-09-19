@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:invoice/Screens/Login%20Screen/login.dart';
 import 'package:invoice/Screens/Login%20Screen/register.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
@@ -107,7 +108,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 50,
                   width: double.infinity,
                   child: ElevatedButton(
-                      onPressed: (){},
+                      onPressed: (){
+                        Get.to(
+                          const Login(),
+                          transition: Transition.fade
+                        );
+                      },
                       style: ButtonStyle(
                         backgroundColor: MaterialStateColor.resolveWith(
                                 (states) => Colors.white

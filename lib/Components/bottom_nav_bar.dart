@@ -1,5 +1,7 @@
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
+import 'package:invoice/Screens/Home/home.dart';
+import 'package:invoice/Screens/Profile/profile.dart';
 
 // ignore: must_be_immutable
 class BottomBar extends StatefulWidget {
@@ -17,16 +19,13 @@ class _BottomBarState extends State<BottomBar> {
   Widget? check(){
     if(widget.bottomIndex == 0){
       previousIndex = 0;
-      return const Placeholder();
+      return const Home();
     }else if(widget.bottomIndex == 1){
       previousIndex = 1;
       return const Placeholder();
     }else if(widget.bottomIndex == 2){
       previousIndex = 2;
-      return const Placeholder();
-    }else if(widget.bottomIndex == 3){
-      previousIndex = 3;
-      return const Placeholder();
+      return const Profile();
     }
     return null;
   }
@@ -54,10 +53,6 @@ class _BottomBarState extends State<BottomBar> {
           FlashyTabBarItem(
             icon: const Icon(Icons.search),
             title: const Text('Search'),
-          ),
-          FlashyTabBarItem(
-            icon: const Icon(Icons.shopping_cart),
-            title: const Text('Cart'),
           ),
           FlashyTabBarItem(
             icon: const Icon(Icons.person),
