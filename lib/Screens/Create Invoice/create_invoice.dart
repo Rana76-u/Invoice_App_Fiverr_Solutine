@@ -1,7 +1,10 @@
 import 'dart:io';
-
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:invoice/Components/global_variables.dart';
+import 'package:invoice/Screens/Product%20Screen/product_details_screen.dart';
 import 'package:lottie/lottie.dart';
 
 class CreateInvoice extends StatefulWidget {
@@ -16,14 +19,9 @@ class _CreateInvoiceState extends State<CreateInvoice> {
   final ImagePicker _imagePicker = ImagePicker();
   XFile? image;
   DateTime selectedDate = DateTime.now();
+  bool isDeleting = false;
 
   TextEditingController shippingMarkController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
-  TextEditingController brandController = TextEditingController();
-  TextEditingController sizeController = TextEditingController();
-  TextEditingController unitController = TextEditingController();
-  TextEditingController rateController = TextEditingController();
-
   void _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -51,7 +49,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
           child: FittedBox(
             child: FloatingActionButton.extended(
               onPressed: () {
-                showModalBottomSheet(
+                /*showModalBottomSheet(
                   isScrollControlled: true,
                     shape: const RoundedRectangleBorder( // <-- SEE HERE
                       borderRadius: BorderRadius.vertical(
@@ -320,6 +318,10 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                         ),
                       );
                     }
+                );*/
+                Get.to(
+                  ProductDetailsScreen(),
+                  transition: Transition.fade
                 );
               },
               shape: RoundedRectangleBorder(
@@ -357,7 +359,6 @@ class _CreateInvoiceState extends State<CreateInvoice> {
 
               textWidget('Upload Picture of Shop/Supplier'),
               const SizedBox(height: 5,),
-
               //Chosen Image
               GestureDetector(
                 onTap: () async {
@@ -475,6 +476,265 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                   cursorColor: Colors.black,
                 ),
               ),
+
+              textWidget('Delivery Date'),
+              // Date Picker
+              SizedBox(
+                height: 50,
+                width: double.infinity,
+                child: ElevatedButton(
+                    onPressed: (){
+                      _selectDate(context);
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateColor.resolveWith(
+                              (states) => Colors.white
+                      ),
+                      shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                            side: BorderSide.none,
+                          )
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.date_range,
+                          color: Colors.green,
+                        ),
+                        const SizedBox(width: 10,),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Select a day',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.bold
+                              ),
+                            ),
+
+                            //Picked Date
+                            Text(
+                              DateFormat('EE, dd MMM,yy').format(selectedDate.toLocal()),
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  overflow: TextOverflow.ellipsis
+                              ),
+                            ),
+                          ],
+                        )
+                      ],
+                    )
+                ),
+              ),
+
+              const SizedBox(height: 15,),
+
+              //Items
+              textWidget('Items ${productImages.length}'),
+              if(productImages.isNotEmpty)...[
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: isDeleting ?
+                  const Center(
+                    child: LinearProgressIndicator(),
+                  ) :
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: productImages.length,
+                    itemBuilder: (context, index) {
+                      return SizedBox(
+                        height: 140,
+                        width: double.infinity,
+                        child: Card(
+                          elevation: 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              //CheckBox
+                              /*Padding(
+                                                    padding: const EdgeInsets.only(right: 11),
+                                                    child: SizedBox(
+                                                      width: 10,
+                                                      child: Checkbox(
+                                                        value: selectedItems[index],
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            selectedItems[index] = !selectedItems[index]!;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),*/
+                              //Image
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width*0.38 - 25,//0.40, 0.38 - 25 0.32 - 10
+                                  height: 124, //137 127 120
+                                  decoration: BoxDecoration(
+                                    /*border: Border.all(
+                                                              width: 0, //4
+                                                              color: Colors.transparent
+                                                          ),*/
+                                      borderRadius: BorderRadius.circular(20)
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(15),
+                                    child:  Image.file(
+                                      File(productImages[index].path),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              //Texts
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width*0.45 - 10,//200,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    //Description
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 11),
+                                      child: Text(
+                                        descriptions[index],
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+
+                                    //Brand
+                                    Text(
+                                      'Brand: ${brandNames[index]}',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54
+                                      ),
+                                    ),
+
+                                    //Size
+                                    Text(
+                                      'Size: ${sizes[index]}',
+                                      style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54
+                                      ),
+                                    ),
+
+                                    //Quantity
+                                    Text(
+                                      'Quantity: ${units[index]}',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54
+                                      ),
+                                    ),
+
+                                    //Rate
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: Text(
+                                        'Rate: ${rates[index]}',
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black54,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              //Delete
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return  AlertDialog(
+                                        title: const Text('Please Confirm'),
+                                        content: const Text('Are you sure you want to delete this item?'),
+                                        actions: [
+                                          // The "Yes" button
+                                          TextButton(
+                                              onPressed: () {
+
+                                                productImages.removeAt(index);
+                                                descriptions.removeAt(index);
+                                                brandNames.removeAt(index);
+                                                sizes.removeAt(index);
+                                                units.removeAt(index);
+                                                rates.removeAt(index);
+
+                                                setState(() {
+                                                  Navigator.of(context).pop();
+                                                });
+                                              },
+                                              child: const Text('Yes')
+                                          ),
+                                          TextButton(
+                                              onPressed: () {
+                                                // Close the dialog
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text('No'))
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                                child: const Padding(
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: SizedBox(
+                                    child: Icon(
+                                      Icons.delete_forever,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ]
+              else...[
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: Text(
+                      'Nothing to Show.\n'
+                          'Click \'Add Product\' to add items',
+                      style: TextStyle(
+                          fontSize: 12,
+                          //fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                          fontFamily: 'Urbanist'
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              ],
 
               const SizedBox(height: 200,)
             ],
