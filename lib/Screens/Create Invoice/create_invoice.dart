@@ -4,8 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:invoice/Components/global_variables.dart';
+import 'package:invoice/Components/model/customer.dart';
+import 'package:invoice/Components/model/supplier.dart';
 import 'package:invoice/Screens/Product%20Screen/product_details_screen.dart';
 import 'package:lottie/lottie.dart';
+
+import '../../Components/api/pdf_api.dart';
+import '../../Components/api/pdf_invoice_api.dart';
+import '../../Components/model/invoice.dart';
 
 class CreateInvoice extends StatefulWidget {
   const CreateInvoice({super.key});
@@ -17,11 +23,11 @@ class CreateInvoice extends StatefulWidget {
 class _CreateInvoiceState extends State<CreateInvoice> {
 
   final ImagePicker _imagePicker = ImagePicker();
-  XFile? image;
   DateTime selectedDate = DateTime.now();
   bool isDeleting = false;
+  double total = 0.0;
 
-  TextEditingController shippingMarkController = TextEditingController();
+
   void _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -38,6 +44,14 @@ class _CreateInvoiceState extends State<CreateInvoice> {
   }
 
   @override
+  void initState() {
+    for(int i=0; i<productImages.length; i++){
+      total = total + (units[i]*rates[i]);
+    }
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -45,7 +59,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
         padding: const EdgeInsets.only(bottom: 20),
         child: SizedBox(
           height: 60,
-          width: 200,
+          width: MediaQuery.of(context).size.width,//200
           child: FittedBox(
             child: FloatingActionButton.extended(
               onPressed: () {
@@ -320,8 +334,8 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                     }
                 );*/
                 Get.to(
-                  ProductDetailsScreen(),
-                  transition: Transition.fade
+                    ProductDetailsScreen(),
+                    transition: Transition.fade
                 );
               },
               shape: RoundedRectangleBorder(
@@ -372,7 +386,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                           // The "Camera" button
                           TextButton(
                               onPressed: () async {
-                                image = await _imagePicker.pickImage(source: ImageSource.camera);
+                                shopSupplierImage = await _imagePicker.pickImage(source: ImageSource.camera);
                                 setState(() {
                                   // Close the dialog
                                   Navigator.of(context).pop();
@@ -381,7 +395,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                               child: const Text('Camera')),
                           TextButton(
                               onPressed: () async {
-                                image = await _imagePicker.pickImage(source: ImageSource.gallery);
+                                shopSupplierImage = await _imagePicker.pickImage(source: ImageSource.gallery);
                                 setState(() {
                                   // Close the dialog
                                   Navigator.of(context).pop();
@@ -411,9 +425,9 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                       Positioned(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(15),
-                          child: image != null ?
+                          child: shopSupplierImage != null ?
                           Image.file(
-                            File(image!.path),
+                            File(shopSupplierImage!.path),
                             fit: BoxFit.cover,
                           )
                               :
@@ -536,7 +550,13 @@ class _CreateInvoiceState extends State<CreateInvoice> {
               const SizedBox(height: 15,),
 
               //Items
-              textWidget('Items ${productImages.length}'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  textWidget('Items ${productImages.length}'),
+                  textWidget('Grand Total: $total'),
+                ],
+              ),
               if(productImages.isNotEmpty)...[
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
@@ -550,111 +570,126 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                     itemCount: productImages.length,
                     itemBuilder: (context, index) {
                       return SizedBox(
-                        height: 140,
+                        height: 150,
                         width: double.infinity,
                         child: Card(
                           elevation: 0,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              //CheckBox
-                              /*Padding(
-                                                    padding: const EdgeInsets.only(right: 11),
-                                                    child: SizedBox(
-                                                      width: 10,
-                                                      child: Checkbox(
-                                                        value: selectedItems[index],
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            selectedItems[index] = !selectedItems[index]!;
-                                                          });
-                                                        },
-                                                      ),
-                                                    ),
-                                                  ),*/
-                              //Image
-                              Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width*0.38 - 25,//0.40, 0.38 - 25 0.32 - 10
-                                  height: 124, //137 127 120
-                                  decoration: BoxDecoration(
-                                    /*border: Border.all(
-                                                              width: 0, //4
-                                                              color: Colors.transparent
-                                                          ),*/
-                                      borderRadius: BorderRadius.circular(20)
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(15),
-                                    child:  Image.file(
-                                      File(productImages[index].path),
-                                      fit: BoxFit.cover,
+                              GestureDetector(
+                                onTap: () {
+                                  Get.to(
+                                      ProductDetailsScreen(
+                                      /*description: descriptions[index],
+                                      size: sizes[index],
+                                      brand: brandNames[index],
+                                      rate: rates[index],
+                                      unit: units[index],*/
+                                      selectedItemIndex: index,
                                     ),
-                                  ),
-                                ),
-                              ),
-
-                              //Texts
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width*0.45 - 10,//200,
-                                child: Column(
+                                    transition: Transition.fade
+                                  );
+                                },
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    //Description
+                                    //Image
                                     Padding(
-                                      padding: const EdgeInsets.only(top: 11),
-                                      child: Text(
-                                        descriptions[index],
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.bold,
+                                      padding: const EdgeInsets.only(right: 10),
+                                      child: Container(
+                                        width: MediaQuery.of(context).size.width*0.38 - 25,//0.40, 0.38 - 25 0.32 - 10
+                                        height: 124, //137 127 120
+                                        decoration: BoxDecoration(
+                                          /*border: Border.all(
+                                                                width: 0, //4
+                                                                color: Colors.transparent
+                                                            ),*/
+                                            borderRadius: BorderRadius.circular(20)
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(15),
+                                          child:  Image.file(
+                                            File(productImages[index].path),
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
                                       ),
                                     ),
 
-                                    //Brand
-                                    Text(
-                                      'Brand: ${brandNames[index]}',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black54
-                                      ),
-                                    ),
+                                    //Texts
+                                    SizedBox(
+                                      width: MediaQuery.of(context).size.width*0.45 - 10,//200,
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          //Description
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 7),
+                                            child: Text(
+                                              descriptions[index],
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
 
-                                    //Size
-                                    Text(
-                                      'Size: ${sizes[index]}',
-                                      style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black54
-                                      ),
-                                    ),
+                                          //Brand
+                                          Text(
+                                            'Brand: ${brandNames[index]}',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.black54
+                                            ),
+                                          ),
 
-                                    //Quantity
-                                    Text(
-                                      'Quantity: ${units[index]}',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black54
-                                      ),
-                                    ),
+                                          //Size
+                                          Text(
+                                            'Size: ${sizes[index]}',
+                                            style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.black54
+                                            ),
+                                          ),
 
-                                    //Rate
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 2),
-                                      child: Text(
-                                        'Rate: ${rates[index]}',
-                                        style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.black54,
-                                            fontWeight: FontWeight.bold
-                                        ),
+                                          //Quantity
+                                          Text(
+                                            'Quantity: ${units[index]}',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.black54
+                                            ),
+                                          ),
+
+                                          //Rate
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 2),
+                                            child: Text(
+                                              'Rate: ${rates[index]}',
+                                              style: const TextStyle(
+                                                  fontSize: 15,
+                                                  color: Colors.black54,
+                                                  fontWeight: FontWeight.bold
+                                              ),
+                                            ),
+                                          ),
+
+                                          //total
+                                          Text(
+                                            'Total: ${units[index]*rates[index]}',
+                                            style: const TextStyle(
+                                                fontSize: 15,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -733,6 +768,64 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                       textAlign: TextAlign.center,
                     ),
                   ),
+                )
+              ],
+
+              const SizedBox(height: 20,),
+
+              if(productImages.isNotEmpty)...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    //Save Invoice Button
+                    SizedBox(
+                      height: 50,
+                      width: MediaQuery.of(context).size.width*0.5-30,
+                      child: ElevatedButton(
+                          onPressed: (){
+                            if(shopSupplierImage?.path == null){
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Select Image First'))
+                              );
+                            }
+                            else if(shippingMarkController.text.isEmpty){
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Write Description'))
+                              );
+                            }
+                            else {
+                              //Do something
+                            }
+                          },
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith(
+                                    (states) => Colors.deepOrangeAccent
+                            ),
+                            elevation:MaterialStateProperty.resolveWith<double>(
+                                  (Set<MaterialState> states) {
+                                return 10.0;
+                              },
+                            ),
+                            shape: MaterialStateProperty.all(
+                                RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5)
+                                )
+                            ),
+                          ),
+                          child: const Text(
+                            'Save Invoice',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.white
+                            ),
+                          )
+                      ),
+                    ),
+                    const SizedBox(width: 10,),
+                    pdfBtn()
+                  ],
                 )
               ],
 
@@ -824,6 +917,94 @@ class _CreateInvoiceState extends State<CreateInvoice> {
             overflow: TextOverflow.clip,
             color: Colors.black
         ),
+      ),
+    );
+  }
+
+  Widget pdfBtn() {
+    return SizedBox(
+      height: 50,
+      width: MediaQuery.of(context).size.width*0.5-30,
+      child: ElevatedButton(
+          onPressed: () async {
+            if(shopSupplierImage?.path == null){
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Select Image First'))
+              );
+            }
+            else if(shippingMarkController.text.isEmpty){
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Fill in Shipping Mark'))
+              );
+            }
+            else {
+              final invoice = Invoice(
+                supplier: const Supplier(
+                  name: 'Rana',
+                  address: '2 no, Dhk',
+                  paymentInfo: 'COD'
+                ),
+                customer: const Customer(
+                  name: 'xyz',
+                  address: 'sfdkskj'
+                ),
+                info: InvoiceInfo(
+                  date: selectedDate,
+                  description: 'description',
+                  dueDate: DateTime.now(),
+                  number: '4562',
+                ),
+                items: [
+                  InvoiceItem(
+                      description: descriptions[0],
+                      date: DateTime.now(),
+                      quantity: units[0].toInt(),
+                      vat: 5,
+                      unitPrice: rates[0]
+                  )
+                ]
+                /*List.generate(
+                  productImages.length,
+                  (index) {
+                    return InvoiceItem(
+                        description: descriptions[index],
+                        date: DateTime.now(),
+                        quantity: units[index].toInt(),
+                        vat: 5,
+                        unitPrice: rates[index]
+                    );
+                  },
+                )*/
+              );
+              final pdfFile = await PdfInvoiceApi.generate(invoice);
+
+              PdfApi.openFile(pdfFile);
+            }
+          },
+          style: ButtonStyle(
+            backgroundColor: MaterialStateColor.resolveWith(
+                    (states) => Colors.deepOrangeAccent
+            ),
+            elevation:MaterialStateProperty.resolveWith<double>(
+                  (Set<MaterialState> states) {
+                return 10.0;
+              },
+            ),
+            shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5)
+                )
+            ),
+          ),
+          child: const Text(
+            'Generate PDF',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.white
+            ),
+          )
       ),
     );
   }

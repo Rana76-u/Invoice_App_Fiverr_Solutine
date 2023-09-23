@@ -7,14 +7,16 @@ import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
-  String? description;
-  String? brand;
-  String? size;
-  double? unit;
-  double? rate;
-  DateTime? dateTime;
-
-  ProductDetailsScreen({super.key});
+  var selectedItemIndex;
+  ProductDetailsScreen({
+    super.key,
+    /*String? description,
+    String? brand,
+    String? size,
+    double? unit,
+    double? rate,*/
+    this.selectedItemIndex,
+  });
 
   @override
   State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
@@ -45,6 +47,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
+  @override
+  void initState() {
+    if(widget.selectedItemIndex != null){
+      image = productImages[widget.selectedItemIndex];
+      descriptionController.text = descriptions[widget.selectedItemIndex];
+      brandController.text = brandNames[widget.selectedItemIndex];
+      sizeController.text = sizes[widget.selectedItemIndex];
+      unitController.text = units[widget.selectedItemIndex].toString();
+      rateController.text = rates[widget.selectedItemIndex].toString();
+    }
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -351,16 +365,39 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         );
                       }
                       else {
-                        productImages.add(image!);
-                        descriptions.add(descriptionController.text);
-                        brandNames.add(brandController.text);
-                        sizes.add(sizeController.text);
-                        units.add(double.parse(unitController.text));
-                        rates.add(double.parse(rateController.text));
-                        Get.to(
-                          const CreateInvoice(),
-                          transition: Transition.fade
-                        );
+                        if(widget.selectedItemIndex != null){
+                          //remove all the items in index
+                          productImages.removeAt(widget.selectedItemIndex);
+                          descriptions.removeAt(widget.selectedItemIndex);
+                          brandNames.removeAt(widget.selectedItemIndex);
+                          sizes.removeAt(widget.selectedItemIndex);
+                          units.removeAt(widget.selectedItemIndex);
+                          rates.removeAt(widget.selectedItemIndex);
+
+                          //insert new values
+                          productImages.insert(widget.selectedItemIndex, image!);
+                          descriptions.insert(widget.selectedItemIndex, descriptionController.text);
+                          brandNames.insert(widget.selectedItemIndex, brandController.text);
+                          sizes.insert(widget.selectedItemIndex, sizeController.text);
+                          units.insert(widget.selectedItemIndex, double.parse(unitController.text));
+                          rates.insert(widget.selectedItemIndex, double.parse(rateController.text));
+                          Get.to(
+                              const CreateInvoice(),
+                              transition: Transition.fade
+                          );
+                        }
+                        else{
+                          productImages.add(image!);
+                          descriptions.add(descriptionController.text);
+                          brandNames.add(brandController.text);
+                          sizes.add(sizeController.text);
+                          units.add(double.parse(unitController.text));
+                          rates.add(double.parse(rateController.text));
+                          Get.to(
+                              const CreateInvoice(),
+                              transition: Transition.fade
+                          );
+                        }
                       }
                     },
                     style: ButtonStyle(
@@ -378,10 +415,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           )
                       ),
                     ),
-                    child: const Text(
-                      'Add',
+                    child: Text(
+                    widget.selectedItemIndex != null ? 'Save Changes' : 'Add',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: Colors.white
