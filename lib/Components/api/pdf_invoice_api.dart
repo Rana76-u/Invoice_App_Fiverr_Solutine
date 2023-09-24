@@ -51,7 +51,7 @@ class PdfInvoiceApi {
                 width: 50,
                 child: BarcodeWidget(
                   barcode: Barcode.qrCode(),
-                  data: invoice.info.number,
+                  data: invoice.supplier.phoneNumber,//invoice.info.number,
                 ),
               ),
             ],
@@ -71,23 +71,21 @@ class PdfInvoiceApi {
   static Widget buildCustomerAddress(Customer customer) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(customer.name, style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(customer.address),
+          Text('Shipping Mark'),
+          Text(customer.shippingMark, style: TextStyle(fontWeight: FontWeight.bold)),
         ],
       );
 
   static Widget buildInvoiceInfo(InvoiceInfo info) {
-    final paymentTerms = '${info.dueDate.difference(info.date).inDays} days';
+
     final titles = <String>[
       'Invoice Number:',
       'Invoice Date:',
-      'Payment Terms:',
       'Due Date:'
     ];
     final data = <String>[
       info.number,
       Utils.formatDate(info.date),
-      paymentTerms,
       Utils.formatDate(info.dueDate),
     ];
 
@@ -107,7 +105,7 @@ class PdfInvoiceApi {
         children: [
           Text(supplier.name, style: TextStyle(fontWeight: FontWeight.bold)),
           SizedBox(height: 1 * PdfPageFormat.mm),
-          Text(supplier.address),
+          Text(supplier.phoneNumber),
         ],
       );
 
@@ -119,39 +117,37 @@ class PdfInvoiceApi {
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 0.8 * PdfPageFormat.cm),
-          Text(invoice.info.description),
-          SizedBox(height: 0.8 * PdfPageFormat.cm),
         ],
       );
 
   static Widget buildInvoice(Invoice invoice) {
     final headers = [
       'Description',
-      'Date',
+      'Brand',
+      'Size',
       'Quantity',
       'Unit Price',
-      'VAT',
       'Total'
     ];
     final data = invoice.items.map((item) {
-      final total = item.unitPrice * item.quantity * (1 + item.vat);
+      final total = item.unitPrice * item.quantity;
 
       return [
         item.description,
-        Utils.formatDate(item.date),
+        item.brand,
+        item.size,
         '${item.quantity}',
         '\$ ${item.unitPrice}',
-        '${item.vat} %',
         '\$ ${total.toStringAsFixed(2)}',
       ];
     }).toList();
 
-    return Table.fromTextArray(
+    return TableHelper.fromTextArray(
       headers: headers,
       data: data,
       border: null,
       headerStyle: TextStyle(fontWeight: FontWeight.bold),
-      headerDecoration: BoxDecoration(color: PdfColors.grey300),
+      headerDecoration: const BoxDecoration(color: PdfColors.grey300),
       cellHeight: 30,
       cellAlignments: {
         0: Alignment.centerLeft,
@@ -168,9 +164,7 @@ class PdfInvoiceApi {
     final netTotal = invoice.items
         .map((item) => item.unitPrice * item.quantity)
         .reduce((item1, item2) => item1 + item2);
-    final vatPercent = invoice.items.first.vat;
-    final vat = netTotal * vatPercent;
-    final total = netTotal + vat;
+    //final total = netTotal + vat;
 
     return Container(
       alignment: Alignment.centerRight,
@@ -187,13 +181,8 @@ class PdfInvoiceApi {
                   value: Utils.formatPrice(netTotal),
                   unite: true,
                 ),
-                buildText(
-                  title: 'Vat ${vatPercent * 100} %',
-                  value: Utils.formatPrice(vat),
-                  unite: true,
-                ),
                 Divider(),
-                buildText(
+                /*buildText(
                   title: 'Total amount due',
                   titleStyle: TextStyle(
                     fontSize: 14,
@@ -205,7 +194,7 @@ class PdfInvoiceApi {
                 SizedBox(height: 2 * PdfPageFormat.mm),
                 Container(height: 1, color: PdfColors.grey400),
                 SizedBox(height: 0.5 * PdfPageFormat.mm),
-                Container(height: 1, color: PdfColors.grey400),
+                Container(height: 1, color: PdfColors.grey400),*/
               ],
             ),
           ),
@@ -219,9 +208,9 @@ class PdfInvoiceApi {
         children: [
           Divider(),
           SizedBox(height: 2 * PdfPageFormat.mm),
-          buildSimpleText(title: 'Address', value: invoice.supplier.address),
-          SizedBox(height: 1 * PdfPageFormat.mm),
-          buildSimpleText(title: 'Paypal', value: invoice.supplier.paymentInfo),
+          //buildSimpleText(title: 'Address', value: invoice.supplier.address),
+          //SizedBox(height: 1 * PdfPageFormat.mm),
+          //buildSimpleText(title: 'Paypal', value: invoice.supplier.paymentInfo),
         ],
       );
 

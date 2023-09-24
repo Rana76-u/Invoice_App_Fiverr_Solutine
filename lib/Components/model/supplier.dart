@@ -1,11 +1,16 @@
 class Supplier {
   final String name;
-  final String address;
-  final String paymentInfo;
+  final String phoneNumber;
+  final String whatsAppNumber;
+  final String lineNumber;
+  final String viberNumber;
 
-  const Supplier({
-    required this.name,
-    required this.address,
-    required this.paymentInfo,
+  const Supplier(
+   {
+     required this.name,
+     required this.phoneNumber,
+     required this.whatsAppNumber,
+     required this.lineNumber,
+     required this.viberNumber,
   });
 }

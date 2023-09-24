@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
-        //fontFamily: 'Urbanist'
+        fontFamily: 'Urbanist'
       ),
       debugShowCheckedModeBanner: false,
       home: const LoginScreen()//BottomBar(bottomIndex: 0),

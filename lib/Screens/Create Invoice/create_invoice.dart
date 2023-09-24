@@ -9,9 +9,7 @@ import 'package:invoice/Components/model/supplier.dart';
 import 'package:invoice/Screens/Product%20Screen/product_details_screen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-
-import '../../Components/file_handle_api.dart';
-import '../../Components/pdf_invoice_api.dart';
+import '../../Components/api/pdf_invoice_api.dart';
 import '../../Components/model/invoice.dart';
 
 class CreateInvoice extends StatefulWidget {
@@ -765,7 +763,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                           fontSize: 12,
                           //fontWeight: FontWeight.bold,
                           color: Colors.grey,
-                          //fontFamily: 'Urbanist'
+                          fontFamily: 'Urbanist'
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -837,7 +835,11 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                     width: double.infinity,
                     child: SfPdfViewer.file(
                         viewPdfFile,//'https://cdn.syncfusion.com/content/PDFViewer/flutter-succinctly.pdf',
-                        scrollDirection: PdfScrollDirection.horizontal)
+                        scrollDirection: PdfScrollDirection.vertical,
+                      canShowScrollStatus: true,
+                      enableDoubleTapZooming: true,
+                      enableTextSelection: true,
+                    )
                 ),
               ],
 
@@ -939,6 +941,8 @@ class _CreateInvoiceState extends State<CreateInvoice> {
       width: MediaQuery.of(context).size.width*0.5-30,
       child: ElevatedButton(
           onPressed: () async {
+            final messenger = ScaffoldMessenger.of(context);
+
             if(shopSupplierImage?.path == null){
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Select Image First'))
@@ -953,45 +957,43 @@ class _CreateInvoiceState extends State<CreateInvoice> {
               final invoice = Invoice(
                 supplier: const Supplier(
                   name: 'Rana',
-                  address: '2 no, Dhk',
-                  paymentInfo: 'COD'
+                  phoneNumber: '01876678906',
+                  whatsAppNumber: '',
+                  lineNumber: '',
+                  viberNumber: ''
                 ),
                 customer: const Customer(
-                  name: 'xyz',
-                  address: 'sfdkskj'
+                  shippingMark: 'Rana/Male'
                 ),
                 info: InvoiceInfo(
-                  date: selectedDate,
-                  description: 'description',
-                  dueDate: DateTime.now(),
-                  number: '4562',
+                  date: DateTime.now(),
+                  dueDate: selectedDate,
+                  number: '4562', //invoice number
                 ),
-                items: [
-                  InvoiceItem(
-                      description: descriptions[0],
-                      date: DateTime.now(),
-                      quantity: units[0].toInt(),
-                      vat: 5,
-                      unitPrice: rates[0]
-                  )
-                ]
-                /*List.generate(
+                items:
+                List.generate(
                   productImages.length,
                   (index) {
                     return InvoiceItem(
                         description: descriptions[index],
-                        date: DateTime.now(),
+                        brand: brandNames[index],
+                        size: sizes[index],
                         quantity: units[index].toInt(),
-                        vat: 5,
                         unitPrice: rates[index]
                     );
                   },
-                )*/
+                )
               );
-              //final pdfFile = await PdfInvoiceApi.generate(invoice);
+              final pdfFile = await PdfInvoiceApi.generate(invoice);
+
+              messenger.showSnackBar(
+                const SnackBar(
+                    content: Text('Invoice Saved into Downloads Folder')
+                )
+              );
 
               //PdfApi.openFile(pdfFile);
-              final pdfFile = await PdfInvoiceApi.generate();
+              //final pdfFile = await PdfInvoiceApi.generate();
 
               setState(() {
                 viewPdfFile = pdfFile;

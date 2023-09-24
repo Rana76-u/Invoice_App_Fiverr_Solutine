@@ -16,13 +16,11 @@ class Invoice {
 }
 
 class InvoiceInfo {
-  final String description;
   final String number;
   final DateTime date;
   final DateTime dueDate;
 
   const InvoiceInfo({
-    required this.description,
     required this.number,
     required this.date,
     required this.dueDate,
@@ -31,16 +29,16 @@ class InvoiceInfo {
 
 class InvoiceItem {
   final String description;
-  final DateTime date;
   final int quantity;
-  final double vat;
   final double unitPrice;
+  final String brand;
+  final String size;
 
   const InvoiceItem({
     required this.description,
-    required this.date,
     required this.quantity,
-    required this.vat,
     required this.unitPrice,
+    required this.brand,
+    required this.size,
   });
 }

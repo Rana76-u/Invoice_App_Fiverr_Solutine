@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -7,7 +6,6 @@ import 'package:invoice/Screens/Login%20Screen/login.dart';
 import 'package:invoice/Screens/Login%20Screen/register.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
@@ -23,24 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String url = 'https://cdn.syncfusion.com/content/PDFViewer/flutter-succinctly.pdf';
   var pdfFile;
-
-  @override
-  void initState() {
-    //requestPermission();
-    super.initState();
-  }
-
-  void requestPermission() async {
-    var status = await Permission.storage.status;
-    if(!status.isGranted){
-      await Permission.storage.request();
-    }
-
-    /*var status1 = await Permission.manageExternalStorage.status;
-    if(!status1.isGranted){
-      await Permission.manageExternalStorage.request();
-    }*/
-  }
 
   Future<bool> _onWillPop() async {
     return false; //<-- SEE HERE
@@ -264,157 +244,160 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              //const Expanded(child: SizedBox()),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                //const Expanded(child: SizedBox()),
 
-              const SizedBox(height: 20,),
-              Lottie.asset('assets/Lottie/login.json'),
+                const SizedBox(height: 20,),
+                Lottie.asset('assets/Lottie/login.json'),
 
-              const SizedBox(height: 80,),
+                const SizedBox(height: 80,),
 
-              //Welcome
-              const Padding(
-                padding: EdgeInsets.only(left: 3),
-                child: Text(
-                  'Welcome',
-                  style: TextStyle(
-                    fontSize: 30,
-                    //fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-
-              //to invoice App
-              const Padding(
-                padding: EdgeInsets.only(left: 3),
-                child: Text(
-                  'to invoice app',
-                  style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      //fontFamily: 'Urbanist'
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 50,),
-
-              //Register Button
-              SizedBox(
-                height: 50,
-                width: double.infinity,
-                child: ElevatedButton(
-                    onPressed: (){
-                      Get.to(
-                        const RegisterScreen(),
-                        transition: Transition.rightToLeft
-                      );
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateColor.resolveWith(
-                              (states) => Colors.deepOrangeAccent
-                      ),
-                      elevation:MaterialStateProperty.resolveWith<double>(
-                            (Set<MaterialState> states) {
-                          return 10.0;
-                        },
-                      ),
-                      shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5)
-                        )
-                      ),
+                //Welcome
+                const Padding(
+                  padding: EdgeInsets.only(left: 3),
+                  child: Text(
+                    'Welcome',
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontFamily: 'Urbanist',
+                      fontWeight: FontWeight.w700,
                     ),
-                    child: const Text(
-                      'Register',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.white
-                      ),
-                    )
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 10,),
+                //to invoice App
+                const Padding(
+                  padding: EdgeInsets.only(left: 3),
+                  child: Text(
+                    'to invoice app',
+                    style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Urbanist'
+                    ),
+                  ),
+                ),
 
-              //Login Button
-              SizedBox(
-                height: 50,
-                width: double.infinity,
-                child: ElevatedButton(
-                    onPressed: (){
-                      Get.to(
-                        const Login(),
-                        transition: Transition.fade
-                      );
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateColor.resolveWith(
-                              (states) => Colors.white
-                      ),
-                      shape: MaterialStateProperty.all(
+                const SizedBox(height: 50,),
+
+                //Register Button
+                SizedBox(
+                  height: 50,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                      onPressed: (){
+                        Get.to(
+                          const RegisterScreen(),
+                          transition: Transition.rightToLeft
+                        );
+                      },
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateColor.resolveWith(
+                                (states) => Colors.deepOrangeAccent
+                        ),
+                        elevation:MaterialStateProperty.resolveWith<double>(
+                              (Set<MaterialState> states) {
+                            return 10.0;
+                          },
+                        ),
+                        shape: MaterialStateProperty.all(
                           RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            side: const BorderSide(
-                              color: Colors.deepOrangeAccent,
-                              width: 2
-                            )
+                            borderRadius: BorderRadius.circular(5)
                           )
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      'Login',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.deepOrangeAccent
+                      child: const Text(
+                        'Register',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.white
+                        ),
+                      )
+                  ),
+                ),
+
+                const SizedBox(height: 10,),
+
+                //Login Button
+                SizedBox(
+                  height: 50,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                      onPressed: (){
+                        Get.to(
+                          const Login(),
+                          transition: Transition.fade
+                        );
+                      },
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateColor.resolveWith(
+                                (states) => Colors.white
+                        ),
+                        shape: MaterialStateProperty.all(
+                            RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                              side: const BorderSide(
+                                color: Colors.deepOrangeAccent,
+                                width: 2
+                              )
+                            )
+                        ),
                       ),
-                    )
+                      child: const Text(
+                        'Login',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.deepOrangeAccent
+                        ),
+                      )
+                  ),
                 ),
-              ),
 
 
-              if(pdfFile != null)...[
-                Container(
-                    height: 500,
-                    width: double.infinity,
-                    child: SfPdfViewer.file(
-                        pdfFile,//'https://cdn.syncfusion.com/content/PDFViewer/flutter-succinctly.pdf',
-                        scrollDirection: PdfScrollDirection.horizontal)
-                ),
-              ],
+                if(pdfFile != null)...[
+                  Container(
+                      height: 500,
+                      width: double.infinity,
+                      child: SfPdfViewer.file(
+                          pdfFile,//'https://cdn.syncfusion.com/content/PDFViewer/flutter-succinctly.pdf',
+                          scrollDirection: PdfScrollDirection.horizontal)
+                  ),
+                ],
 
-              ElevatedButton(
-                  onPressed: () async {
-                    //final pdfFile = await PdfInvoiceApi.generate();
+                ElevatedButton(
+                    onPressed: () async {
+                      //final pdfFile = await PdfInvoiceApi.generate();
 
-                    //FileHandleApi.openFile(pdfFile);
-                    // Create a new PDF document.
-                    /*final PdfDocument document = PdfDocument();
+                      //FileHandleApi.openFile(pdfFile);
+                      // Create a new PDF document.
+                      /*final PdfDocument document = PdfDocument();
 // Add a PDF page and draw text.
-                    document.pages.add().graphics.drawString(
-                        'Hello World!', PdfStandardFont(PdfFontFamily.helvetica, 12),
-                        brush: PdfSolidBrush(PdfColor(0, 0, 0)),
-                        bounds: const Rect.fromLTWH(0, 0, 150, 20));
+                      document.pages.add().graphics.drawString(
+                          'Hello World!', PdfStandardFont(PdfFontFamily.helvetica, 12),
+                          brush: PdfSolidBrush(PdfColor(0, 0, 0)),
+                          bounds: const Rect.fromLTWH(0, 0, 150, 20));
 // Save the document.
-                    File('HelloWorld.pdf').writeAsBytes(await document.save());
+                      File('HelloWorld.pdf').writeAsBytes(await document.save());
 // Dispose the document.
-                    document.dispose();*/
-                    generateInvoice();
-                  },
-                  child: Text('PDF')
-              )
-            ],
+                      document.dispose();*/
+                      generateInvoice();
+                    },
+                    child: Text('PDF')
+                )
+              ],
+            ),
           ),
         ),
       ),
