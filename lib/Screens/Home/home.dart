@@ -3,6 +3,7 @@ import 'package:invoice/Components/bottom_nav_bar.dart';
 import 'package:invoice/Screens/Create%20Invoice/create_invoice.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -88,6 +89,26 @@ class _HomeState extends State<Home> {
                 padding: const EdgeInsets.only(top: 25, bottom: 10),
                   child: textWidget('Recent Invoices')
               ),
+
+              Container(
+                height: 500,
+                width: double.infinity,
+                child: SfPdfViewer.network(
+                    'https://cdn.syncfusion.com/content/PDFViewer/flutter-succinctly.pdf',
+                    scrollDirection: PdfScrollDirection.horizontal)
+              ),
+
+              ElevatedButton(
+                onPressed: () {
+                  SfPdfViewer.network(
+                      'https://cdn.syncfusion.com/content/PDFViewer/flutter-succinctly.pdf',
+                      canShowScrollHead: false,
+                      canShowScrollStatus: false
+                  );
+                  print('clicked');
+                },
+                child: Text('PDF'),
+              )
 
             ],
           ),

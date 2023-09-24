@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.solutine.invoice">
     <application
         android:label="invoice"
         android:name="${applicationName}"
