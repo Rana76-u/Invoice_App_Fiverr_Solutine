@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "442571443979",
+    "project_id": "invoice-app-533e7",
+    "storage_bucket": "invoice-app-533e7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:442571443979:android:c94a50d3fc5c76d79fdc0e",
+        "android_client_info": {
+          "package_name": "com.solutine.invoice"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUucwKMRyakQRnLm8Se4LLBviR0r_wIKg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

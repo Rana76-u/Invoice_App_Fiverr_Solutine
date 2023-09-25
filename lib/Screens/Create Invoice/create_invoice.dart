@@ -3,12 +3,14 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:invoice/Components/bottom_nav_bar.dart';
 import 'package:invoice/Components/global_variables.dart';
 import 'package:invoice/Components/model/customer.dart';
 import 'package:invoice/Components/model/supplier.dart';
 import 'package:invoice/Screens/Product%20Screen/product_details_screen.dart';
+import 'package:invoice/Screens/viewpdf.dart';
 import 'package:lottie/lottie.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../Components/api/pdf_invoice_api.dart';
 import '../../Components/model/invoice.dart';
 
@@ -25,8 +27,32 @@ class _CreateInvoiceState extends State<CreateInvoice> {
   DateTime selectedDate = DateTime.now();
   bool isDeleting = false;
   double total = 0.0;
-  var viewPdfFile;
+  File? viewPdfFile;
+  String shopName = '';
+  String vendorType = '';
+  String phnNumber = '';
+  String cardImageLink = '';
 
+  @override
+  void initState() {
+    for(int i=0; i<productImages.length; i++){
+      total = total + (units[i]*rates[i]);
+    }
+    getLocallySavedData();
+    super.initState();
+  }
+
+  void getLocallySavedData() async {
+    SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+
+    setState(() {
+      vendorType = prefs.getString('vendorType')!;
+      cardImageLink = prefs.getString('businessCardURL')!;
+      shopName = prefs.getString('shopName')!;
+      phnNumber = prefs.getString('phoneNumber')!;
+    });
+  }
 
   void _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
@@ -41,14 +67,6 @@ class _CreateInvoiceState extends State<CreateInvoice> {
         selectedDate = pickedDate;
       });
     }
-  }
-
-  @override
-  void initState() {
-    for(int i=0; i<productImages.length; i++){
-      total = total + (units[i]*rates[i]);
-    }
-    super.initState();
   }
 
   @override
@@ -363,7 +381,23 @@ class _CreateInvoiceState extends State<CreateInvoice> {
             children: [
               SizedBox(height: MediaQuery.of(context).size.height*0.05,),
 
-              textWidget('Create Invoice'),
+              GestureDetector(
+                onTap: () {
+                  Get.to(
+                      BottomBar(bottomIndex: 0),
+                      transition: Transition.fade
+                  );
+                },
+                child: Row(
+                  children: [
+                    const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                      size: 15,
+                    ),
+                    textWidget('Create Invoice'),
+                  ],
+                ),
+              ),
 
               const SizedBox(height: 20,),
 
@@ -830,17 +864,47 @@ class _CreateInvoiceState extends State<CreateInvoice> {
               ],
 
               if(viewPdfFile != null)...[
-                Container(
-                    height: 500,
-                    width: double.infinity,
-                    child: SfPdfViewer.file(
-                        viewPdfFile,//'https://cdn.syncfusion.com/content/PDFViewer/flutter-succinctly.pdf',
-                        scrollDirection: PdfScrollDirection.vertical,
-                      canShowScrollStatus: true,
-                      enableDoubleTapZooming: true,
-                      enableTextSelection: true,
-                    )
-                ),
+                GestureDetector(
+                  onTap: () {
+                    Get.to(
+                        ViewPDF(pdf: viewPdfFile!),
+                        transition: Transition.fade
+                    );
+                  },
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 30, right: 10),
+                          child: Text(
+                            'Invoice PDF saved into Downloads Folder',
+                            style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                decoration: TextDecoration.underline,
+                                overflow: TextOverflow.clip
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(right: 10),
+                        child: Text(
+                          'Click to View',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepOrangeAccent,
+                              fontStyle: FontStyle.italic,
+                              decoration: TextDecoration.underline,
+                              overflow: TextOverflow.clip
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
               ],
 
               const SizedBox(height: 200,)
@@ -857,7 +921,9 @@ class _CreateInvoiceState extends State<CreateInvoice> {
       width: double.infinity,
       child: ElevatedButton(
           onPressed: (){
-
+            Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => BottomBar(bottomIndex: 2),)
+            );
           },
           style: ButtonStyle(
             backgroundColor: MaterialStateColor.resolveWith(
@@ -881,22 +947,33 @@ class _CreateInvoiceState extends State<CreateInvoice> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              //Card Image
               SizedBox(
-                width: MediaQuery.of(context).size.width*0.4,
+                height: 120,
+                width: MediaQuery.of(context).size.width*0.4-10,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15),
-                  child: Lottie.asset('assets/Lottie/upload_image.json'),
+                  child: cardImageLink != '' ? Image.network(
+                    cardImageLink,
+                    fit: BoxFit.cover,
+                  ) :
+                  Lottie.asset(
+                    'assets/Lottie/upload_image.json',
+                  ), //Lottie.asset('assets/Lottie/upload_image.json')
                 ),
               ),
+              //Space
+              const SizedBox(width: 10,),
+              //Texts
               SizedBox(
                 width: MediaQuery.of(context).size.width*0.4,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    textWidget('Shop/Supplier Name'),
-                    subTextWidget('+8801876678906'),
-                    subTextWidget('Vendor Type: Shop'),
+                    textWidget(shopName),
+                    subTextWidget(phnNumber),
+                    subTextWidget('Vendor Type: $vendorType'),
                   ],
                 ),
               )
@@ -998,6 +1075,11 @@ class _CreateInvoiceState extends State<CreateInvoice> {
               setState(() {
                 viewPdfFile = pdfFile;
               });
+
+              Get.to(
+                ViewPDF(pdf: pdfFile),
+                transition: Transition.fade
+              );
               //FileHandleApi.openFile(pdfFile);*/
             }
           },

@@ -1,80 +1,77 @@
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
-import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:image/image.dart' as img;
 import '../../Components/bottom_nav_bar.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class EditProfile extends StatefulWidget {
+  const EditProfile({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<EditProfile> createState() => _EditProfileState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _EditProfileState extends State<EditProfile> {
+
 
   String chosenVendorType = '';
   final ImagePicker _imagePicker = ImagePicker();
   XFile? image;
   bool confirmPassMatch = false;
   String imageLink = '';
+  String phoneNumber = '';
   bool isLoading = false;
 
   TextEditingController shopNameController = TextEditingController();
-  TextEditingController phnNumberController = TextEditingController();
   TextEditingController whatsAppController = TextEditingController();
   TextEditingController lineController = TextEditingController();
   TextEditingController viberController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
 
-  Widget textWidget(String text){
-    return Padding(
-      padding: const EdgeInsets.only(left: 3),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          overflow: TextOverflow.clip
-        ),
-      ),
-    );
+  @override
+  void initState() {
+    getLocallySavedData();
+    super.initState();
   }
 
-  Widget subTextWidget(String text){
-    return Padding(
-      padding: const EdgeInsets.only(left: 3, bottom: 3),
-      child: Text(
-        text,
-        style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            overflow: TextOverflow.clip,
-          color: Colors.grey
-        ),
-      ),
-    );
+  void getLocallySavedData() async {
+    SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+
+    setState(() {
+      chosenVendorType = prefs.getString('vendorType')!;
+      imageLink = prefs.getString('businessCardURL')!;
+      shopNameController.text = prefs.getString('shopName')!;
+      phoneNumber = prefs.getString('phoneNumber')!;
+      passwordController.text = prefs.getString('password')!;
+      whatsAppController.text = prefs.getString('whatsApp')!;
+      lineController.text = prefs.getString('line')!;
+      viberController.text = prefs.getString('viber')!;
+    });
   }
 
   Future<void> uploadInfo() async {
-    await _uploadImages();
+    if(image != null){
+      await deleteImage(imageLink);
+
+      await _uploadImages();
+    }
 
     await FirebaseFirestore
         .instance
         .collection('userData')
-        .doc(phnNumberController.text)
-        .set({
+        .doc(phoneNumber)
+        .update({
       'vendorType': chosenVendorType,
       'businessCardURL': imageLink,
       'shopName': shopNameController.text,
-      'phoneNumber': phnNumberController.text,
       'password': passwordController.text,
       'whatsApp': whatsAppController.text,
       'line': lineController.text,
@@ -89,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     Reference ref = FirebaseStorage
         .instance
         .ref()
-        .child('Shop Media/${phnNumberController.text}/Business Card'); //DateTime.now().millisecondsSinceEpoch
+        .child('Shop Media/$phoneNumber/Business Card'); //DateTime.now().millisecondsSinceEpoch
     UploadTask uploadTask = ref.putFile(compressedFile);
     TaskSnapshot snapshot = await uploadTask;
     if (snapshot.state == TaskState.success) {
@@ -111,18 +108,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Future<void> deleteImage(String imageUrl) async {
+    try {
+      // Create a Firebase Storage reference from the image URL
+      Reference storageReference = FirebaseStorage.instance.refFromURL(imageUrl);
+
+      // Delete the image
+      await storageReference.delete();
+      print('Image deleted successfully');
+    } catch (e) {
+      print('Error deleting image: $e');
+    }
+  }
+
   Future<void> saveDataInternally() async {
     SharedPreferences prefs =
-        await SharedPreferences.getInstance();
+    await SharedPreferences.getInstance();
 
-    prefs.setString('vendorType', chosenVendorType);
-    prefs.setString('businessCardURL', imageLink);
-    prefs.setString('shopName', shopNameController.text);
-    prefs.setString('phoneNumber', phnNumberController.text);
-    prefs.setString('password', passwordController.text);
-    prefs.setString('whatsApp', whatsAppController.text);
-    prefs.setString('line', lineController.text);
-    prefs.setString('viber', viberController.text);
+    setState(() {
+      prefs.setString('vendorType', chosenVendorType);
+      prefs.setString('businessCardURL', imageLink);
+      prefs.setString('shopName', shopNameController.text);
+      prefs.setString('phoneNumber', phoneNumber);
+      prefs.setString('password', passwordController.text);
+      prefs.setString('whatsApp', whatsAppController.text);
+      prefs.setString('line', lineController.text);
+      prefs.setString('viber', viberController.text);
+    });
   }
 
   @override
@@ -135,7 +147,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: const LinearProgressIndicator(),
         ),
       )
-      :
+          :
       SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -144,11 +156,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               SizedBox(height: MediaQuery.of(context).size.height*0.04,),
 
-              //Welcome
+              //Edit Profile
               const Padding(
                 padding: EdgeInsets.only(left: 3),
                 child: Text(
-                  'Register',
+                  'Edit Profile',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -332,6 +344,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             fit: BoxFit.cover,
                           )
                               :
+                          imageLink != ''? Image.network(
+                            imageLink,
+                            fit: BoxFit.cover,
+                          ) :
                           Lottie.asset(
                             'assets/Lottie/upload_image.json',
                           ),
@@ -395,41 +411,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         fontSize: 14
                     ),
                   ),
-                  cursorColor: Colors.green,
-                ),
-              ),
-
-              //Contact Number*
-              Padding(
-                  padding: const EdgeInsets.only(top: 15, bottom: 5),
-                  child: textWidget('Phone Number*')
-              ),
-              //Contact Number field
-              SizedBox(
-                height: 60,
-                child: TextFormField(
-                  controller: phnNumberController,
-                  decoration: InputDecoration(
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.green),
-                    ),
-                    enabledBorder:  OutlineInputBorder(
-                        borderSide: BorderSide.none,
-                        borderRadius: BorderRadius.circular(10)
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.phone,
-                      color: Colors.green,
-                    ),
-                    filled: true,
-                    fillColor: Colors.green[50],
-                    labelText: "Enter Contact Number",
-                    labelStyle: const TextStyle(
-                        color: Colors.green,
-                        fontSize: 14
-                    ),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(),
                   cursorColor: Colors.green,
                 ),
               ),
@@ -634,7 +615,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 20,),
 
-              //Register Button
+              //Update Button
               SizedBox(
                 height: 50,
                 width: double.infinity,
@@ -649,24 +630,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ))
                         );
                       }
-                      else if(image == null){
-                        messenger.showSnackBar(
-                            const SnackBar(content: Text(
-                              'Image of Business Card/ID card is Required',
-                            ))
-                        );
-                      }
                       else if(shopNameController.text.isEmpty){
                         messenger.showSnackBar(
                             const SnackBar(content: Text(
                               'Name Required',
-                            ))
-                        );
-                      }
-                      else if(phnNumberController.text.isEmpty){
-                        messenger.showSnackBar(
-                            const SnackBar(content: Text(
-                              'Phone Number Required',
                             ))
                         );
                       }
@@ -685,39 +652,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         );
                       }
                       else{
-                        final userData =
-                        await FirebaseFirestore
-                            .instance
-                            .collection('userData')
-                            .doc(phnNumberController.text)
-                            .get();
 
-                        if (userData.exists) {
-                          messenger.showSnackBar(
-                              const SnackBar(content: Text(
-                                'User Exists with this Phone Number. Try Login.',
-                              ))
-                          );
-                        }
-                        else {
+                        setState(() {
+                          isLoading = true;
+                        });
 
-                          setState(() {
-                            isLoading = true;
-                          });
-                          // Proceed Login
-                          await uploadInfo();
+                        await uploadInfo();
 
-                          await saveDataInternally();
+                        await saveDataInternally();
 
-                          setState(() {
-                            isLoading = false;
-                          });
+                        Get.to(
+                            BottomBar(bottomIndex: 0),
+                            transition: Transition.rightToLeft
+                        );
 
-                          Get.to(
-                              BottomBar(bottomIndex: 0),
-                              transition: Transition.rightToLeft
-                          );
-                        }
+                        setState(() {
+                          isLoading = false;
+                        });
                       }
                     },
                     style: ButtonStyle(
@@ -736,7 +687,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     child: const Text(
-                      'Register',
+                      'Update Info',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -750,6 +701,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 100,),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget textWidget(String text){
+    return Padding(
+      padding: const EdgeInsets.only(left: 3),
+      child: Text(
+        text,
+        style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            overflow: TextOverflow.clip
         ),
       ),
     );

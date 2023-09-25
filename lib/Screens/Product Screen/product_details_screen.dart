@@ -6,6 +6,7 @@ import 'package:invoice/Screens/Create%20Invoice/create_invoice.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 
+
 class ProductDetailsScreen extends StatefulWidget {
   var selectedItemIndex;
   ProductDetailsScreen({
@@ -72,15 +73,30 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               SizedBox(height: MediaQuery.of(context).size.height*0.05,),
 
               //'Add Product Details'
-              const Padding(
-                padding: EdgeInsets.only(left: 3),
-                child: Text(
-                  'Add Product Details',
-                  style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w700,
-                      overflow: TextOverflow.clip
-                  ),
+              GestureDetector(
+                onTap: () {
+                  Get.to(
+                      const CreateInvoice(),
+                      transition: Transition.fade
+                  );
+                },
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 3),
+                      child: Text(
+                        'Add Product Details',
+                        style: TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.w700,
+                            overflow: TextOverflow.clip
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 

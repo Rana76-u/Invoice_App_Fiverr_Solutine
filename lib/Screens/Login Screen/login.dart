@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:invoice/Components/bottom_nav_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -11,6 +13,7 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
 
+  bool isLoading = false;
   TextEditingController phnNumberController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
@@ -31,7 +34,15 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
+      body: isLoading ?
+      Center(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width*0.4,
+          child: const LinearProgressIndicator(),
+        ),
+      )
+          :
+      SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -125,12 +136,12 @@ class _LoginState extends State<Login> {
 
               const SizedBox(height: 20,),
 
-              //Register Button
+              //Login Button
               SizedBox(
                 height: 50,
                 width: double.infinity,
                 child: ElevatedButton(
-                    onPressed: (){
+                    onPressed: () async {
                       final messenger = ScaffoldMessenger.of(context);
 
                       if(phnNumberController.text.isEmpty){
@@ -148,10 +159,63 @@ class _LoginState extends State<Login> {
                         );
                       }
                       else{
-                        Get.to(
-                            BottomBar(bottomIndex: 0),
-                            transition: Transition.fade
-                        );
+                        final userData =
+                            await FirebaseFirestore
+                            .instance
+                            .collection('userData')
+                            .doc(phnNumberController.text)
+                            .get();
+
+                        //Checks if Phone Number is Correct or not
+                        if (userData.exists) {
+                          final password = await userData.get('password');
+
+                          //Checks if Password is Correct or not
+                          if(password == passwordController.text){
+                            setState(() {
+                              isLoading = true;
+                            });
+
+                            //saveDataInternally
+                            String vendorType = await userData.get('vendorType');
+                            String businessCardURL = await userData.get('businessCardURL');
+                            String shopName = await userData.get('shopName');
+                            String whatsApp = await userData.get('whatsApp');
+                            String line = await userData.get('line');
+                            String viber = await userData.get('viber');
+
+                            SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+
+                            prefs.setString('vendorType', vendorType);
+                            prefs.setString('businessCardURL', businessCardURL);
+                            prefs.setString('shopName', shopName);
+                            prefs.setString('phoneNumber', phnNumberController.text);
+                            prefs.setString('password', passwordController.text);
+                            prefs.setString('whatsApp', whatsApp);
+                            prefs.setString('line', line);
+                            prefs.setString('viber', viber);
+
+                            Get.to(
+                                BottomBar(bottomIndex: 0),
+                                transition: Transition.leftToRight
+                            );
+                          }
+                          else{
+                            messenger.showSnackBar(
+                                const SnackBar(content: Text(
+                                  'Password isn\'t Correct',
+                                ))
+                            );
+                          }
+                        }
+                        else {
+                          messenger.showSnackBar(
+                              const SnackBar(content: Text(
+                                'Phone Number isn\'t Correct',
+                              ))
+                          );
+                        }
                       }
                     },
                     style: ButtonStyle(

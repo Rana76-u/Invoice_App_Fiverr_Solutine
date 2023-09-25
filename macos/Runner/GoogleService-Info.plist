@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCjzzm-3uXQKv68h65_FCrLwt-XDBwbu6g</string>
+	<key>GCM_SENDER_ID</key>
+	<string>442571443979</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.solutine.invoice.RunnerTests</string>
+	<key>PROJECT_ID</key>
+	<string>invoice-app-533e7</string>
+	<key>STORAGE_BUCKET</key>
+	<string>invoice-app-533e7.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:442571443979:ios:1cbc9493c7138b6b9fdc0e</string>
+</dict>
+</plist>
