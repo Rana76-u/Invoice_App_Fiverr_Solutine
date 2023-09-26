@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +15,7 @@ import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Components/api/pdf_invoice_api.dart';
 import '../../Components/model/invoice.dart';
+import 'package:image/image.dart' as img;
 
 class CreateInvoice extends StatefulWidget {
   const CreateInvoice({super.key});
@@ -32,6 +35,12 @@ class _CreateInvoiceState extends State<CreateInvoice> {
   String vendorType = '';
   String phnNumber = '';
   String cardImageLink = '';
+  int invoiceNumber = 0;
+  String shopSupplierImageLink = '';
+  String itemImageLink = '';
+  bool isLoading = false;
+
+  TextEditingController shippingMarkController = TextEditingController();
 
   @override
   void initState() {
@@ -47,8 +56,11 @@ class _CreateInvoiceState extends State<CreateInvoice> {
     await SharedPreferences.getInstance();
 
     setState(() {
+      shippingMarkController.text = prefs.getString('shippingMark')!;
+
       vendorType = prefs.getString('vendorType')!;
       cardImageLink = prefs.getString('businessCardURL')!;
+      invoiceNumber = prefs.getInt('invoiceNumber')!;
       shopName = prefs.getString('shopName')!;
       phnNumber = prefs.getString('phoneNumber')!;
     });
@@ -66,6 +78,121 @@ class _CreateInvoiceState extends State<CreateInvoice> {
       setState(() {
         selectedDate = pickedDate;
       });
+    }
+  }
+
+  Future<void> uploadInfo() async {
+
+    //Get the current invoice number
+    final userData =
+    await FirebaseFirestore
+        .instance
+        .collection('userData')
+        .doc(phnNumber)
+        .get();
+
+    invoiceNumber = await userData.get('invoiceNumber');
+
+    invoiceNumber = invoiceNumber + 1;
+
+    //set new InvoiceNumber
+    await FirebaseFirestore
+        .instance
+        .collection('userData')
+        .doc(phnNumber)
+        .update({
+      'invoiceNumber': invoiceNumber
+    });
+
+    //upload shop/supplier image into storage and get the shopSupplierImageLink
+    await _uploadShopSupplierImage();
+
+    //upload invoice info
+    await FirebaseFirestore
+        .instance
+        .collection('userData')
+        .doc(phnNumber).collection('invoices').doc(invoiceNumber.toString())
+        .set({
+      'shippingMark': shippingMarkController.text,
+      'deliveryDate': selectedDate,
+      'supplierImage': shopSupplierImageLink
+    });
+
+
+    //upload items
+    for(int index=0; index<productImages.length; index++){
+      //uploads image and get download url
+      File compressedFile = await _compressImage(File(productImages[index].path));
+      Reference ref = FirebaseStorage
+          .instance
+          .ref()
+          .child('Shop Media/$phnNumber/Invoice Media/$invoiceNumber/item$index'); //DateTime.now().millisecondsSinceEpoch
+      UploadTask uploadTask = ref.putFile(compressedFile);
+      TaskSnapshot snapshot = await uploadTask;
+      if (snapshot.state == TaskState.success) {
+        String downloadURL = await snapshot.ref.getDownloadURL();
+        itemImageLink = downloadURL;
+      } else {
+        print('An Error Occurred\n${snapshot.state}');
+        return;
+      }
+
+      //save info into DB
+      await FirebaseFirestore
+          .instance
+          .collection('userData')
+          .doc(phnNumber).collection('invoices').doc(invoiceNumber.toString()).collection('items').doc()
+          .set({
+        'description': descriptions[index],
+        'brand': brandNames[index],
+        'size': sizes[index],
+        'quantity': units[index],
+        'rate': rates[index],
+        'imageLink': itemImageLink
+      });
+    }
+
+    //Remove global variables
+    productImageLinks.clear();
+    productImages.clear();
+    descriptions.clear();
+    brandNames.clear();
+    sizes.clear();
+    units.clear();
+    rates.clear();
+
+    //shopSupplierImage = null;
+    shippingMarkController.clear();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('shippingMark', '');
+  }
+
+  Future<void> _uploadShopSupplierImage() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    File compressedFile = await _compressImage(File(shopSupplierImage!.path));
+    Reference ref = FirebaseStorage
+        .instance
+        .ref()
+        .child('Shop Media/$phnNumber/Invoice Media/$invoiceNumber/shopSupplierImage'); //DateTime.now().millisecondsSinceEpoch
+    UploadTask uploadTask = ref.putFile(compressedFile);
+    TaskSnapshot snapshot = await uploadTask;
+    if (snapshot.state == TaskState.success) {
+      String downloadURL = await snapshot.ref.getDownloadURL();
+      shopSupplierImageLink = downloadURL;
+    } else {
+      messenger.showSnackBar(SnackBar(content: Text('An Error Occurred\n${snapshot.state}')));
+      return;
+    }
+  }
+
+  Future<File> _compressImage(File file) async {
+    img.Image? image = img.decodeImage(await file.readAsBytes());
+    if (image != null) {
+      img.Image compressedImage = img.copyResize(image, width: 1024);
+      return File('${file.path}_compressed.jpg')..writeAsBytesSync(img.encodeJpg(compressedImage, quality: 50));
+    } else {
+      return file;
     }
   }
 
@@ -373,7 +500,15 @@ class _CreateInvoiceState extends State<CreateInvoice> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
+      body:  isLoading ?
+      Center(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width*0.4,
+          child: const LinearProgressIndicator(),
+        ),
+      )
+          :
+      SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Column(
@@ -505,6 +640,10 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                 height: 60,
                 child: TextField(
                   controller: shippingMarkController,
+                  onChanged: (value) async {
+                    SharedPreferences  prefs = await SharedPreferences.getInstance();
+                    prefs.setString('shippingMark', shippingMarkController.text);
+                  },
                   decoration: InputDecoration(
                     focusedBorder: const OutlineInputBorder(
                       borderSide: BorderSide.none,
@@ -807,6 +946,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
 
               const SizedBox(height: 20,),
 
+              //Buttons
               if(productImages.isNotEmpty)...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -816,7 +956,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                       height: 50,
                       width: MediaQuery.of(context).size.width*0.5-30,
                       child: ElevatedButton(
-                          onPressed: (){
+                          onPressed: () async {
                             if(shopSupplierImage?.path == null){
                               ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Select Image First'))
@@ -828,7 +968,17 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                               );
                             }
                             else {
-                              //Do something
+
+                              setState(() {
+                                isLoading = true;
+                              });
+
+                              await uploadInfo();
+
+                              Get.to(
+                                BottomBar(bottomIndex: 0),
+                                transition: Transition.fade
+                              );
                             }
                           },
                           style: ButtonStyle(
@@ -955,7 +1105,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                   borderRadius: BorderRadius.circular(15),
                   child: cardImageLink != '' ? Image.network(
                     cardImageLink,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                   ) :
                   Lottie.asset(
                     'assets/Lottie/upload_image.json',

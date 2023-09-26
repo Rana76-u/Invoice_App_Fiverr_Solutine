@@ -1,15 +1,22 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:invoice/Components/global_variables.dart';
 import 'package:invoice/Screens/Create%20Invoice/create_invoice.dart';
+import 'package:invoice/Screens/ViewEditDelete%20Invoice/view_invoice.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image/image.dart' as img;
 
 
-class ProductDetailsScreen extends StatefulWidget {
+class EditSavedProductDetailsScreen extends StatefulWidget {
   var selectedItemIndex;
-  ProductDetailsScreen({
+  final String docID;
+  final int invoiceNumber;
+  EditSavedProductDetailsScreen({
     super.key,
     /*String? description,
     String? brand,
@@ -17,16 +24,20 @@ class ProductDetailsScreen extends StatefulWidget {
     double? unit,
     double? rate,*/
     this.selectedItemIndex,
+    required this.docID,
+    required this.invoiceNumber,
   });
 
   @override
-  State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
+  State<EditSavedProductDetailsScreen> createState() => _EditSavedProductDetailsScreenState();
 }
 
-class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
+class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsScreen> {
 
   final ImagePicker _imagePicker = ImagePicker();
   XFile? image;
+  String imageLink = '';
+  String phnNumber = '';
 
   TextEditingController descriptionController = TextEditingController();
   TextEditingController brandController = TextEditingController();
@@ -51,7 +62,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   @override
   void initState() {
     if(widget.selectedItemIndex != null){
-      image = productImages[widget.selectedItemIndex];
+      imageLink = productImageLinks[widget.selectedItemIndex];
       descriptionController.text = descriptions[widget.selectedItemIndex];
       brandController.text = brandNames[widget.selectedItemIndex];
       sizeController.text = sizes[widget.selectedItemIndex];
@@ -59,6 +70,74 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       rateController.text = rates[widget.selectedItemIndex].toString();
     }
     super.initState();
+  }
+
+  Future<void> updateInfo() async {
+
+    //upload shop/supplier image into storage and get the shopSupplierImageLink
+    if(image?.path != null){
+      await _uploadImage();
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    phnNumber = prefs.getString('phoneNumber')!;
+
+    //upload invoice info
+    await FirebaseFirestore
+        .instance
+        .collection('userData')
+        .doc(phnNumber)
+        .collection('invoices')
+        .doc(widget.invoiceNumber.toString())
+        .collection('items').doc(widget.docID)
+        .update({
+      'description': descriptionController.text,
+      'brand': brandController.text,
+      'size': sizeController.text,
+      'quantity': double.parse(unitController.text),
+      'rate': double.parse(rateController.text),
+      'imageLink': imageLink
+    });
+
+    //Remove global variables
+    productImageLinks.clear();
+    productImages.clear();
+    descriptions.clear();
+    brandNames.clear();
+    sizes.clear();
+    units.clear();
+    rates.clear();
+
+    prefs.setString('shippingMark', '');
+  }
+
+  Future<void> _uploadImage() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    File compressedFile = await _compressImage(File(shopSupplierImage!.path));
+    Reference ref = FirebaseStorage
+        .instance
+        .ref()
+        .child('Shop Media/$phnNumber/Invoice Media/${widget.invoiceNumber}/item${widget.selectedItemIndex}'); //DateTime.now().millisecondsSinceEpoch
+    UploadTask uploadTask = ref.putFile(compressedFile);
+    TaskSnapshot snapshot = await uploadTask;
+    if (snapshot.state == TaskState.success) {
+      String downloadURL = await snapshot.ref.getDownloadURL();
+      imageLink = downloadURL;
+    } else {
+      messenger.showSnackBar(SnackBar(content: Text('An Error Occurred\n${snapshot.state}')));
+      return;
+    }
+  }
+
+  Future<File> _compressImage(File file) async {
+    img.Image? image = img.decodeImage(await file.readAsBytes());
+    if (image != null) {
+      img.Image compressedImage = img.copyResize(image, width: 1024);
+      return File('${file.path}_compressed.jpg')..writeAsBytesSync(img.encodeJpg(compressedImage, quality: 50));
+    } else {
+      return file;
+    }
   }
 
   @override
@@ -159,6 +238,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           child: image != null ?
                           Image.file(
                             File(image!.path),
+                            fit: BoxFit.cover,
+                          )
+                              :
+                          imageLink != '' ?
+                          Image.network(
+                            imageLink,
                             fit: BoxFit.cover,
                           )
                               :
@@ -344,18 +429,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 15,),
 
-              //Add Product Button
+              //Save Changes Button
               SizedBox(
                 height: 50,
                 width: double.infinity,
                 child: ElevatedButton(
-                    onPressed: (){
-                      if(image?.path == null){
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Select Image First'))
-                        );
-                      }
-                      else if(descriptionController.text.isEmpty){
+                    onPressed: () async {
+                      if(descriptionController.text.isEmpty){
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Write Description'))
                         );
@@ -383,22 +463,25 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       else {
                         if(widget.selectedItemIndex != null){
                           //remove all the items in index
-                          productImages.removeAt(widget.selectedItemIndex);
+                          productImageLinks.removeAt(widget.selectedItemIndex);
                           descriptions.removeAt(widget.selectedItemIndex);
                           brandNames.removeAt(widget.selectedItemIndex);
                           sizes.removeAt(widget.selectedItemIndex);
                           units.removeAt(widget.selectedItemIndex);
                           rates.removeAt(widget.selectedItemIndex);
 
+
+                          await updateInfo();
+
                           //insert new values
-                          productImages.insert(widget.selectedItemIndex, image!);
+                          productImageLinks.insert(widget.selectedItemIndex, imageLink);
                           descriptions.insert(widget.selectedItemIndex, descriptionController.text);
                           brandNames.insert(widget.selectedItemIndex, brandController.text);
                           sizes.insert(widget.selectedItemIndex, sizeController.text);
                           units.insert(widget.selectedItemIndex, double.parse(unitController.text));
                           rates.insert(widget.selectedItemIndex, double.parse(rateController.text));
                           Get.to(
-                              const CreateInvoice(),
+                              ViewInvoice(invoiceNumber: widget.invoiceNumber),
                               transition: Transition.fade
                           );
                         }

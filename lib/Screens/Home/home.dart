@@ -1,9 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:invoice/Components/bottom_nav_bar.dart';
 import 'package:invoice/Screens/Create%20Invoice/create_invoice.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../ViewEditDelete Invoice/view_invoice.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -18,6 +22,7 @@ class _HomeState extends State<Home> {
   String vendorType = '';
   String phnNumber = '';
   String cardImageLink = '';
+  int invoiceNumber = 0;
 
   @override
   void initState() {
@@ -34,7 +39,18 @@ class _HomeState extends State<Home> {
       cardImageLink = prefs.getString('businessCardURL')!;
       shopName = prefs.getString('shopName')!;
       phnNumber = prefs.getString('phoneNumber')!;
+      invoiceNumber = prefs.getInt('invoiceNumber')!;
     });
+
+    final userData =
+    await FirebaseFirestore
+        .instance
+        .collection('userData')
+        .doc(phnNumber)
+        .get();
+
+    invoiceNumber = userData.get('invoiceNumber');
+    prefs.setInt('invoiceNumber', invoiceNumber);
   }
 
   Widget textWidget(String text){
@@ -60,7 +76,7 @@ class _HomeState extends State<Home> {
             fontSize: 13,
             fontWeight: FontWeight.bold,
             overflow: TextOverflow.clip,
-            color: Colors.black
+            color: Colors.purple
         ),
       ),
     );
@@ -119,6 +135,71 @@ class _HomeState extends State<Home> {
                     child: textWidget('Recent Invoices')
                 ),
 
+                //Show Recent Invoices
+                ListView.builder(
+                  itemCount: invoiceNumber >= 3 ? 3: invoiceNumber,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return FutureBuilder(
+                      future: FirebaseFirestore
+                          .instance
+                          .collection('userData')
+                          .doc(phnNumber)
+                          .collection('invoices')
+                          .doc('${invoiceNumber - index}').get(),
+                        builder: (context, snapshot) {
+                          if(snapshot.hasData){
+                            return ListTile(
+                              onTap: () {
+                                Get.to(
+                                  ViewInvoice(invoiceNumber: invoiceNumber - index),
+                                  transition: Transition.fade
+                                );
+                              },
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(7),
+                                child: Image.network(
+                                  snapshot.data!.get('supplierImage'),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              title: Text(snapshot.data!.get('shippingMark'),),
+                              subtitle: Text(
+                                '${DateFormat('EE, dd MMM,yy').format(snapshot.data!.get('deliveryDate').toDate())}\nInvoice no. ${invoiceNumber - index}'
+                              ),
+                              trailing: const Icon(Icons.arrow_forward),
+                              tileColor: Colors.blue.shade50,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)
+                              ),
+                            );
+                          }
+                          else if(snapshot.connectionState == ConnectionState.waiting){
+                            return const Center(
+                              child: LinearProgressIndicator(),
+                            );
+                          }
+                          else{
+                            return const Center(
+                              child: Text('Error Loading Data'),
+                            );
+                          }
+                        },
+                    );
+                  },
+                ),
+
+
+                //More Button
+                if(invoiceNumber != 0)...[
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 15),
+                        child: subTextWidget('Show More')
+                    ),
+                  ),
+                ]
               ],
             ),
           ),
@@ -167,7 +248,7 @@ class _HomeState extends State<Home> {
                   borderRadius: BorderRadius.circular(15),
                   child: cardImageLink != '' ? Image.network(
                     cardImageLink,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                   ) :
                   Lottie.asset(
                     'assets/Lottie/upload_image.json',

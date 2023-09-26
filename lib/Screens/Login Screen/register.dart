@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../Components/bottom_nav_bar.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -73,6 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         .set({
       'vendorType': chosenVendorType,
       'businessCardURL': imageLink,
+      'invoiceNumber': 0,
       'shopName': shopNameController.text,
       'phoneNumber': phnNumberController.text,
       'password': passwordController.text,
@@ -117,6 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     prefs.setString('vendorType', chosenVendorType);
     prefs.setString('businessCardURL', imageLink);
+    prefs.setInt('invoiceNumber', 0);
     prefs.setString('shopName', shopNameController.text);
     prefs.setString('phoneNumber', phnNumberController.text);
     prefs.setString('password', passwordController.text);

@@ -143,6 +143,7 @@ class _ProfileState extends State<Profile> {
                     setState(() {
                       prefs.remove('vendorType');
                       prefs.remove('businessCardURL');
+                      prefs.remove('invoiceNumber');
                       prefs.remove('shopName');
                       prefs.remove('phoneNumber');
                       prefs.remove('password');

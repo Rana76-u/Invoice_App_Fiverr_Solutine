@@ -183,6 +183,7 @@ class _LoginState extends State<Login> {
                             String whatsApp = await userData.get('whatsApp');
                             String line = await userData.get('line');
                             String viber = await userData.get('viber');
+                            int invoiceNumber = await userData.get('invoiceNumber');
 
                             SharedPreferences prefs =
                             await SharedPreferences.getInstance();
@@ -195,6 +196,7 @@ class _LoginState extends State<Login> {
                             prefs.setString('whatsApp', whatsApp);
                             prefs.setString('line', line);
                             prefs.setString('viber', viber);
+                            prefs.setInt('invoiceNumber', invoiceNumber);
 
                             Get.to(
                                 BottomBar(bottomIndex: 0),
