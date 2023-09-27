@@ -150,28 +150,31 @@ class _HomeState extends State<Home> {
                           .doc('${invoiceNumber - index}').get(),
                         builder: (context, snapshot) {
                           if(snapshot.hasData){
-                            return ListTile(
-                              onTap: () {
-                                Get.to(
-                                  ViewInvoice(invoiceNumber: invoiceNumber - index),
-                                  transition: Transition.fade
-                                );
-                              },
-                              leading: ClipRRect(
-                                borderRadius: BorderRadius.circular(7),
-                                child: Image.network(
-                                  snapshot.data!.get('supplierImage'),
-                                  fit: BoxFit.cover,
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 5),
+                              child: ListTile(
+                                onTap: () {
+                                  Get.to(
+                                    ViewInvoice(invoiceNumber: invoiceNumber - index),
+                                    transition: Transition.fade
+                                  );
+                                },
+                                leading: ClipRRect(
+                                  borderRadius: BorderRadius.circular(7),
+                                  child: Image.network(
+                                    snapshot.data!.get('supplierImage'),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                              ),
-                              title: Text(snapshot.data!.get('shippingMark'),),
-                              subtitle: Text(
-                                '${DateFormat('EE, dd MMM,yy').format(snapshot.data!.get('deliveryDate').toDate())}\nInvoice no. ${invoiceNumber - index}'
-                              ),
-                              trailing: const Icon(Icons.arrow_forward),
-                              tileColor: Colors.blue.shade50,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)
+                                title: Text(snapshot.data!.get('shippingMark'),),
+                                subtitle: Text(
+                                  '${DateFormat('EE, dd MMM,yy').format(snapshot.data!.get('deliveryDate').toDate())}\nInvoice no. ${invoiceNumber - index}'
+                                ),
+                                trailing: const Icon(Icons.arrow_forward),
+                                tileColor: Colors.blue.shade50,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)
+                                ),
                               ),
                             );
                           }

@@ -40,9 +40,10 @@ class _ViewInvoiceState extends State<ViewInvoice> {
   String shopSupplierImageLink = '';
   String itemImageLink = '';
   bool isLoading = false;
-  TextEditingController shippingMarkController = TextEditingController();
   bool isDateSelectedByPicker = false;
   bool seeTotalTaped = false;
+  bool isShippingMarkChanged = false;
+  TextEditingController shippingMarkController = TextEditingController();
 
   @override
   void initState() {
@@ -55,11 +56,6 @@ class _ViewInvoiceState extends State<ViewInvoice> {
     await SharedPreferences.getInstance();
 
     setState(() {
-      shippingMarkController.text = prefs.getString('shippingMark')!;
-
-      vendorType = prefs.getString('vendorType')!;
-      cardImageLink = prefs.getString('businessCardURL')!;
-      shopName = prefs.getString('shopName')!;
       phnNumber = prefs.getString('phoneNumber')!;
     });
   }
@@ -94,7 +90,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
         .collection('userData')
         .doc(phnNumber).collection('invoices').doc(widget.invoiceNumber.toString())
         .update({
-      'shippingMark': prefs.getString('shippingMark'),
+      'shippingMark': shippingMarkController.text,//prefs.getString('shippingMark'),
       'deliveryDate': selectedDate,
       'supplierImage': shopSupplierImageLink
     });
@@ -109,7 +105,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
     rates.clear();
 
     //shopSupplierImage = null;
-    shippingMarkController.clear();
+    //shippingMarkController.clear();
     prefs.setString('shippingMark', '');
   }
 
@@ -467,7 +463,9 @@ class _ViewInvoiceState extends State<ViewInvoice> {
             builder: (context, snapshot) {
               if(snapshot.hasData){
 
-                shippingMarkController.text = snapshot.data!.get('shippingMark');
+                if(!isShippingMarkChanged){
+                  shippingMarkController.text = snapshot.data!.get('shippingMark');
+                }
                 shopSupplierImageLink = snapshot.data!.get('supplierImage');
                 
                 if(isDateSelectedByPicker == false){
@@ -601,8 +599,9 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                       child: TextField(
                         controller: shippingMarkController,
                         onChanged: (value) async {
-                          SharedPreferences  prefs = await SharedPreferences.getInstance();
-                          prefs.setString('shippingMark', shippingMarkController.text);
+                          setState(() {
+                            isShippingMarkChanged = true;
+                          });
                         },
                         decoration: InputDecoration(
                           focusedBorder: const OutlineInputBorder(
@@ -955,7 +954,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          //Save Invoice Button
+                          //update Invoice Button
                           SizedBox(
                             height: 50,
                             width: MediaQuery.of(context).size.width*0.5-30,
@@ -963,7 +962,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                 onPressed: () async {
                                   if(shippingMarkController.text.isEmpty){
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Write Description'))
+                                        const SnackBar(content: Text('Fill in Shipping Mark'))
                                     );
                                   }
                                   else {
