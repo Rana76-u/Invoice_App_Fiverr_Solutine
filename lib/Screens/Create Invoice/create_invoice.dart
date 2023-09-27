@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:invoice/Components/bottom_nav_bar.dart';
-import 'package:invoice/Components/global_variables.dart';
 import 'package:invoice/Components/model/customer.dart';
 import 'package:invoice/Components/model/supplier.dart';
 import 'package:invoice/Screens/Product%20Screen/product_details_screen.dart';
@@ -14,6 +13,7 @@ import 'package:invoice/Screens/viewpdf.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Components/api/pdf_invoice_api.dart';
+import '../../Components/global_variables.dart';
 import '../../Components/model/invoice.dart';
 import 'package:image/image.dart' as img;
 
@@ -1211,7 +1211,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                   },
                 )
               );
-              final pdfFile = await PdfInvoiceApi.generate(invoice);
+              final pdfFile = await PdfInvoiceApi.generate(invoice, 'my_invoice');
 
               messenger.showSnackBar(
                 const SnackBar(

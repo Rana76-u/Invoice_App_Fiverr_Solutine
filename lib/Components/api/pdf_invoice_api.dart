@@ -11,7 +11,7 @@ import '../model/customer.dart';
 import '../model/supplier.dart';
 
 class PdfInvoiceApi {
-  static Future<File> generate(Invoice invoice) async {
+  static Future<File> generate(Invoice invoice, String name) async {
     var myTheme = ThemeData.withFont(
       base: Font.ttf(await rootBundle.load("assets/OpenSans-Regular.ttf")),
       bold: Font.ttf(await rootBundle.load("assets/OpenSans-Bold.ttf")),
@@ -35,7 +35,7 @@ class PdfInvoiceApi {
       footer: (context) => buildFooter(invoice),
     ));
 
-    return PdfApi.saveDocument(name: 'my_invoice.pdf', pdf: pdf);
+    return PdfApi.saveDocument(name: name, pdf: pdf);
   }
 
   static Widget buildHeader(Invoice invoice) => Column(

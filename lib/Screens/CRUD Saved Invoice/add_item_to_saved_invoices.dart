@@ -1,43 +1,36 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:invoice/Components/global_variables.dart';
+import 'package:invoice/Screens/CRUD%20Saved%20Invoice/view_invoice.dart';
 import 'package:invoice/Screens/Create%20Invoice/create_invoice.dart';
-import 'package:invoice/Screens/ViewEditDelete%20Invoice/view_invoice.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image/image.dart' as img;
 
 
-class EditSavedProductDetailsScreen extends StatefulWidget {
-  var selectedItemIndex;
-  final String docID;
+class AddItemToSavedInvoices extends StatefulWidget {
   final int invoiceNumber;
-  EditSavedProductDetailsScreen({
+
+  const AddItemToSavedInvoices({
     super.key,
-    /*String? description,
-    String? brand,
-    String? size,
-    double? unit,
-    double? rate,*/
-    this.selectedItemIndex,
-    required this.docID,
     required this.invoiceNumber,
   });
 
   @override
-  State<EditSavedProductDetailsScreen> createState() => _EditSavedProductDetailsScreenState();
+  State<AddItemToSavedInvoices> createState() => _AddItemToSavedInvoicesState();
 }
 
-class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsScreen> {
+class _AddItemToSavedInvoicesState extends State<AddItemToSavedInvoices> {
 
   final ImagePicker _imagePicker = ImagePicker();
   XFile? image;
   String imageLink = '';
   String phnNumber = '';
+  bool isLoading = false;
 
   TextEditingController descriptionController = TextEditingController();
   TextEditingController brandController = TextEditingController();
@@ -45,42 +38,23 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
   TextEditingController unitController = TextEditingController();
   TextEditingController rateController = TextEditingController();
 
-  Widget textWidget(String text){
-    return Padding(
-      padding: const EdgeInsets.only(left: 3),
-      child: Text(
-        text,
-        style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            overflow: TextOverflow.clip
-        ),
-      ),
-    );
-  }
-
   @override
   void initState() {
-    if(widget.selectedItemIndex != null){
-      imageLink = productImageLinks[widget.selectedItemIndex];
-      descriptionController.text = descriptions[widget.selectedItemIndex];
-      brandController.text = brandNames[widget.selectedItemIndex];
-      sizeController.text = sizes[widget.selectedItemIndex];
-      unitController.text = units[widget.selectedItemIndex].toString();
-      rateController.text = rates[widget.selectedItemIndex].toString();
-    }
+    loadAllDataFromPreviousPage();
     super.initState();
+  }
+
+  Future<void> loadAllDataFromPreviousPage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    phnNumber = prefs.getString('phoneNumber')!;
   }
 
   Future<void> updateInfo() async {
 
     //upload shop/supplier image into storage and get the shopSupplierImageLink
     if(image?.path != null){
-      await _uploadImage();
+      await _uploadItemImage();
     }
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    phnNumber = prefs.getString('phoneNumber')!;
 
     //upload invoice info
     await FirebaseFirestore
@@ -89,8 +63,8 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
         .doc(phnNumber)
         .collection('invoices')
         .doc(widget.invoiceNumber.toString())
-        .collection('items').doc(widget.docID)
-        .update({
+        .collection('items').doc()
+        .set({
       'description': descriptionController.text,
       'brand': brandController.text,
       'size': sizeController.text,
@@ -98,27 +72,17 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
       'rate': double.parse(rateController.text),
       'imageLink': imageLink
     });
-
-    //Remove global variables
-    productImageLinks.clear();
-    productImages.clear();
-    descriptions.clear();
-    brandNames.clear();
-    sizes.clear();
-    units.clear();
-    rates.clear();
-
-    prefs.setString('shippingMark', '');
   }
 
-  Future<void> _uploadImage() async {
+  Future<void> _uploadItemImage() async {
     final messenger = ScaffoldMessenger.of(context);
+    Random random = Random();
 
-    File compressedFile = await _compressImage(File(shopSupplierImage!.path));
+    File compressedFile = await _compressImage(File(image!.path));
     Reference ref = FirebaseStorage
         .instance
         .ref()
-        .child('Shop Media/$phnNumber/Invoice Media/${widget.invoiceNumber}/item${widget.selectedItemIndex}'); //DateTime.now().millisecondsSinceEpoch
+        .child('Shop Media/$phnNumber/Invoice Media/${widget.invoiceNumber}/item${random.nextInt(100)}'); //DateTime.now().millisecondsSinceEpoch
     UploadTask uploadTask = ref.putFile(compressedFile);
     TaskSnapshot snapshot = await uploadTask;
     if (snapshot.state == TaskState.success) {
@@ -143,7 +107,12 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
+      body: isLoading ?
+          const Center(
+            child: LinearProgressIndicator(),
+          )
+      :
+      SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25),
           child: Column(
@@ -203,6 +172,7 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
                                 });
                               },
                               child: const Text('Camera')),
+                          // The "Gallery" button
                           TextButton(
                               onPressed: () async {
                                 image = await _imagePicker.pickImage(source: ImageSource.gallery);
@@ -213,6 +183,7 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
                               },
                               child: const Text('Gallery')
                           ),
+                          // The "Cancel" button
                           TextButton(
                               onPressed: () {
                                 // Close the dialog
@@ -429,13 +400,18 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
 
               const SizedBox(height: 15,),
 
-              //Save Changes Button
+              //Add Button
               SizedBox(
                 height: 50,
                 width: double.infinity,
                 child: ElevatedButton(
                     onPressed: () async {
-                      if(descriptionController.text.isEmpty){
+                      if(image!.path.isEmpty){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Upload Image, It\'s Required'))
+                        );
+                      }
+                      else if(descriptionController.text.isEmpty){
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Write Description'))
                         );
@@ -461,42 +437,17 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
                         );
                       }
                       else {
-                        if(widget.selectedItemIndex != null){
-                          //remove all the items in index
-                          productImageLinks.removeAt(widget.selectedItemIndex);
-                          descriptions.removeAt(widget.selectedItemIndex);
-                          brandNames.removeAt(widget.selectedItemIndex);
-                          sizes.removeAt(widget.selectedItemIndex);
-                          units.removeAt(widget.selectedItemIndex);
-                          rates.removeAt(widget.selectedItemIndex);
 
+                        setState(() {
+                          isLoading = true;
+                        });
 
-                          await updateInfo();
+                        await updateInfo();
 
-                          //insert new values
-                          productImageLinks.insert(widget.selectedItemIndex, imageLink);
-                          descriptions.insert(widget.selectedItemIndex, descriptionController.text);
-                          brandNames.insert(widget.selectedItemIndex, brandController.text);
-                          sizes.insert(widget.selectedItemIndex, sizeController.text);
-                          units.insert(widget.selectedItemIndex, double.parse(unitController.text));
-                          rates.insert(widget.selectedItemIndex, double.parse(rateController.text));
-                          Get.to(
-                              ViewInvoice(invoiceNumber: widget.invoiceNumber),
-                              transition: Transition.fade
-                          );
-                        }
-                        else{
-                          productImages.add(image!);
-                          descriptions.add(descriptionController.text);
-                          brandNames.add(brandController.text);
-                          sizes.add(sizeController.text);
-                          units.add(double.parse(unitController.text));
-                          rates.add(double.parse(rateController.text));
-                          Get.to(
-                              const CreateInvoice(),
-                              transition: Transition.fade
-                          );
-                        }
+                        Get.to(
+                            ViewInvoice(invoiceNumber: widget.invoiceNumber),
+                            transition: Transition.fade
+                        );
                       }
                     },
                     style: ButtonStyle(
@@ -514,10 +465,10 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
                           )
                       ),
                     ),
-                    child: Text(
-                    widget.selectedItemIndex != null ? 'Save Changes' : 'Add',
+                    child: const Text(
+                      'Add Item',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: Colors.white
@@ -529,6 +480,20 @@ class _EditSavedProductDetailsScreenState extends State<EditSavedProductDetailsS
               const SizedBox(height: 150,),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget textWidget(String text){
+    return Padding(
+      padding: const EdgeInsets.only(left: 3),
+      child: Text(
+        text,
+        style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            overflow: TextOverflow.clip
         ),
       ),
     );

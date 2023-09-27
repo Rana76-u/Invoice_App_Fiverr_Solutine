@@ -6,8 +6,7 @@ import 'package:invoice/Screens/Create%20Invoice/create_invoice.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../ViewEditDelete Invoice/view_invoice.dart';
+import '../CRUD Saved Invoice/view_invoice.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});

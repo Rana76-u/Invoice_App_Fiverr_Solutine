@@ -6,16 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:invoice/Components/bottom_nav_bar.dart';
-import 'package:invoice/Components/global_variables.dart';
-import 'package:invoice/Components/model/customer.dart';
+import 'package:invoice/Components/model/invoice.dart';
 import 'package:invoice/Components/model/supplier.dart';
-import 'package:invoice/Screens/Product%20Screen/product_details_screen.dart';
+import 'package:invoice/Screens/CRUD%20Saved%20Invoice/add_item_to_saved_invoices.dart';
 import 'package:invoice/Screens/viewpdf.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../Components/api/pdf_invoice_api.dart';
-import '../../Components/model/invoice.dart';
 import 'package:image/image.dart' as img;
 
+import '../../Components/api/pdf_invoice_api.dart';
+import '../../Components/model/customer.dart';
 import 'edit_product_details_screen.dart';
 
 class ViewInvoice extends StatefulWidget {
@@ -45,6 +44,15 @@ class _ViewInvoiceState extends State<ViewInvoice> {
   bool isShippingMarkChanged = false;
   TextEditingController shippingMarkController = TextEditingController();
 
+  XFile? shopSupplierImage;
+  
+  //For PDF purpose only
+  List<String> productDescriptions = [];
+  List<String> productBrandNames = [];
+  List<String> productSizes = [];
+  List<double> productUnits = [];
+  List<double> productRates = [];
+
   @override
   void initState() {
     getLocallySavedData();
@@ -56,6 +64,8 @@ class _ViewInvoiceState extends State<ViewInvoice> {
     await SharedPreferences.getInstance();
 
     setState(() {
+      phnNumber = prefs.getString('phoneNumber')!;
+      shopName = prefs.getString('shopName')!;
       phnNumber = prefs.getString('phoneNumber')!;
     });
   }
@@ -82,7 +92,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
       await _uploadShopSupplierImage();
     }
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    //SharedPreferences prefs = await SharedPreferences.getInstance();
 
     //upload invoice info
     await FirebaseFirestore
@@ -94,19 +104,6 @@ class _ViewInvoiceState extends State<ViewInvoice> {
       'deliveryDate': selectedDate,
       'supplierImage': shopSupplierImageLink
     });
-
-    //Remove global variables
-    productImageLinks.clear();
-    productImages.clear();
-    descriptions.clear();
-    brandNames.clear();
-    sizes.clear();
-    units.clear();
-    rates.clear();
-
-    //shopSupplierImage = null;
-    //shippingMarkController.clear();
-    prefs.setString('shippingMark', '');
   }
 
   Future<void> _uploadShopSupplierImage() async {
@@ -138,6 +135,30 @@ class _ViewInvoiceState extends State<ViewInvoice> {
     }
   }
 
+  Future<void> deleteItem(String docID) async {
+    await FirebaseFirestore
+        .instance
+        .collection('userData')
+        .doc(phnNumber)
+        .collection('invoices')
+        .doc(widget.invoiceNumber.toString())
+        .collection('items').doc(docID)
+        .delete();
+  }
+
+  Future<void> deleteImage(String imageUrl) async {
+    try {
+      // Create a Firebase Storage reference from the image URL
+      Reference storageReference = FirebaseStorage.instance.refFromURL(imageUrl);
+
+      // Delete the image
+      await storageReference.delete();
+      print('Image deleted successfully');
+    } catch (e) {
+      print('Error deleting image: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -150,278 +171,8 @@ class _ViewInvoiceState extends State<ViewInvoice> {
           child: FittedBox(
             child: FloatingActionButton.extended(
               onPressed: () {
-                /*showModalBottomSheet(
-                  isScrollControlled: true,
-                    shape: const RoundedRectangleBorder( // <-- SEE HERE
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(22.0),
-                      ),
-                    ),
-                    context: context,
-                    builder: (BuildContext context){
-                      return FractionallySizedBox(
-                        heightFactor: 0.9,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 25),
-                          child: SizedBox(
-                            height: MediaQuery.of(context).size.height*0.55, //420
-                            child: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 25,),
-
-                                  textWidget('Product Description'),
-                                  Container(
-                                    width: double.infinity,
-                                    constraints: const BoxConstraints(
-                                      minHeight: 135,
-                                      maxHeight: 300,
-                                    ),
-                                    child: Card(
-                                      elevation: 3,
-                                      shadowColor: Colors.grey.shade50,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(5)
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(left: 10),
-                                        child: TextField(
-                                          maxLines: null,
-                                          keyboardType: TextInputType.multiline,
-                                          controller: descriptionController,
-                                          style: const TextStyle(
-                                            //fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                              overflow: TextOverflow.clip
-                                          ),
-                                          decoration: const InputDecoration(
-                                              hintText: 'Write description about product details . . . ',
-                                              border: OutlineInputBorder(
-                                                  borderSide: BorderSide.none
-                                              )
-                                          ),
-                                          cursorColor: Colors.green,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Product Brand'),
-                                  SizedBox(
-                                    height: 60,
-                                    child: TextField(
-                                      controller: brandController,
-                                      decoration: InputDecoration(
-                                        focusedBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        enabledBorder:  OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                            borderRadius: BorderRadius.circular(10)
-                                        ),
-                                        prefixIcon: const Icon(
-                                          Icons.abc,
-                                          color: Colors.grey,
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.grey[50],
-                                        hintText: "Enter Brand Name",
-                                      ),
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Size'),
-                                  SizedBox(
-                                    height: 60,
-                                    child: TextField(
-                                      controller: sizeController,
-                                      decoration: InputDecoration(
-                                        focusedBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        enabledBorder:  OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                            borderRadius: BorderRadius.circular(10)
-                                        ),
-                                        prefixIcon: const Icon(
-                                          Icons.onetwothree,
-                                          color: Colors.grey,
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.grey[50],
-                                        hintText: "Enter Size",
-                                      ),
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Unit/Quantity'),
-                                  SizedBox(
-                                    height: 60,
-                                    child: TextField(
-                                      controller: shippingMarkController,
-                                      decoration: InputDecoration(
-                                        focusedBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        enabledBorder:  OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                            borderRadius: BorderRadius.circular(10)
-                                        ),
-                                        prefixIcon: const Icon(
-                                          Icons.onetwothree,
-                                          color: Colors.grey,
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.grey[50],
-                                        hintText: "Enter Unit/Quantity",
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Rate'),
-                                  SizedBox(
-                                    height: 60,
-                                    child: TextField(
-                                      controller: shippingMarkController,
-                                      decoration: InputDecoration(
-                                        focusedBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        enabledBorder:  OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                            borderRadius: BorderRadius.circular(10)
-                                        ),
-                                        prefixIcon: const Icon(
-                                          Icons.onetwothree,
-                                          color: Colors.grey,
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.grey[50],
-                                        hintText: "Enter Rate",
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Delivery Date'),
-                                  // Date Picker
-                                  SizedBox(
-                                    height: 50,
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                        onPressed: (){
-
-                                        },
-                                        style: ButtonStyle(
-                                          backgroundColor: MaterialStateColor.resolveWith(
-                                                  (states) => Colors.white
-                                          ),
-                                          shape: MaterialStateProperty.all(
-                                              RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(5),
-                                                side: BorderSide.none,
-                                              )
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            const Icon(
-                                                Icons.date_range,
-                                              color: Colors.grey,
-                                            ),
-                                            const SizedBox(width: 10,),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Select a day',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                    color: Colors.grey,
-                                                    fontWeight: FontWeight.bold
-                                                  ),
-                                                ),
-
-                                                GestureDetector(
-                                                  onTap: () => _selectDate(context),
-                                                  child: Text(
-                                                    '${selectedDate.toLocal()}'.split(' ')[0],
-                                                    style: const TextStyle(
-                                                        fontSize: 16,
-                                                        color: Colors.black,
-                                                        fontWeight: FontWeight.bold
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            )
-                                          ],
-                                        )
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 15,),
-
-                                  //Add Product Button
-                                  SizedBox(
-                                    height: 50,
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                        onPressed: (){
-
-                                        },
-                                        style: ButtonStyle(
-                                          backgroundColor: MaterialStateColor.resolveWith(
-                                                  (states) => Colors.deepOrangeAccent
-                                          ),
-                                          elevation:MaterialStateProperty.resolveWith<double>(
-                                                (Set<MaterialState> states) {
-                                              return 10.0;
-                                            },
-                                          ),
-                                          shape: MaterialStateProperty.all(
-                                              RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(5)
-                                              )
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Add',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: Colors.white
-                                          ),
-                                        )
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                );*/
                 Get.to(
-                    ProductDetailsScreen(),
+                    AddItemToSavedInvoices(invoiceNumber: widget.invoiceNumber),
                     transition: Transition.fade
                 );
               },
@@ -735,13 +486,12 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: itemSnapshot.data!.docs.length,
                                   itemBuilder: (context, index) {
-
-                                    productImageLinks.add(itemSnapshot.data!.docs[index].get('imageLink'));
-                                    descriptions.add(itemSnapshot.data!.docs[index].get('description'));
-                                    brandNames.add(itemSnapshot.data!.docs[index].get('brand'));
-                                    units.add(itemSnapshot.data!.docs[index].get('quantity'));
-                                    rates.add(itemSnapshot.data!.docs[index].get('rate'));
-                                    sizes.add(itemSnapshot.data!.docs[index].get('size'));
+                                    
+                                    productDescriptions.add(itemSnapshot.data!.docs[index].get('description'));
+                                    productBrandNames.add(itemSnapshot.data!.docs[index].get('brand'));
+                                    productUnits.add(itemSnapshot.data!.docs[index].get('quantity'));
+                                    productRates.add(itemSnapshot.data!.docs[index].get('rate'));
+                                    productSizes.add(itemSnapshot.data!.docs[index].get('size'));
 
                                     total = total + (itemSnapshot.data!.docs[index].get('quantity') * itemSnapshot.data!.docs[index].get('rate'));
                                     //SchedulerBinding.instance.addPostFrameCallback((_) => setState(() {}));
@@ -758,14 +508,16 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                               onTap: () {
                                                 Get.to(
                                                     EditSavedProductDetailsScreen(
-                                                      /*description: descriptions[index],
-                                        size: sizes[index],
-                                        brand: brandNames[index],
-                                        rate: rates[index],
-                                        unit: units[index],*/
                                                       selectedItemIndex: index,
                                                       docID: itemSnapshot.data!.docs[index].id,
-                                                      invoiceNumber: widget.invoiceNumber
+                                                      invoiceNumber: widget.invoiceNumber,
+
+                                                      imageLink: itemSnapshot.data!.docs[index].get('imageLink'),
+                                                      description: itemSnapshot.data!.docs[index].get('description'),
+                                                      brand: itemSnapshot.data!.docs[index].get('brand'),
+                                                      size: itemSnapshot.data!.docs[index].get('size'),
+                                                      quantity: itemSnapshot.data!.docs[index].get('quantity'),
+                                                      rate: itemSnapshot.data!.docs[index].get('rate'),
                                                     ),
                                                     transition: Transition.fade
                                                 );
@@ -807,7 +559,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                                         Padding(
                                                           padding: const EdgeInsets.only(top: 7),
                                                           child: Text(
-                                                            descriptions[index],
+                                                            itemSnapshot.data!.docs[index].get('description'),
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
                                                             style: const TextStyle(
@@ -819,7 +571,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
 
                                                         //Brand
                                                         Text(
-                                                          'Brand: ${brandNames[index]}',
+                                                          'Brand: ${itemSnapshot.data!.docs[index].get('brand')}',
                                                           overflow: TextOverflow.ellipsis,
                                                           style: const TextStyle(
                                                               fontSize: 14,
@@ -829,7 +581,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
 
                                                         //Size
                                                         Text(
-                                                          'Size: ${sizes[index]}',
+                                                          'Size: ${itemSnapshot.data!.docs[index].get('size')}',
                                                           style: const TextStyle(
                                                               fontSize: 14,
                                                               color: Colors.black54
@@ -838,7 +590,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
 
                                                         //Quantity
                                                         Text(
-                                                          'Quantity: ${units[index]}',
+                                                          'Quantity: ${itemSnapshot.data!.docs[index].get('quantity')}',
                                                           overflow: TextOverflow.ellipsis,
                                                           style: const TextStyle(
                                                               fontSize: 14,
@@ -850,7 +602,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                                         Padding(
                                                           padding: const EdgeInsets.only(top: 2),
                                                           child: Text(
-                                                            'Rate: ${rates[index]}',
+                                                            'Rate: ${itemSnapshot.data!.docs[index].get('rate')}',
                                                             style: const TextStyle(
                                                                 fontSize: 15,
                                                                 color: Colors.black54,
@@ -861,7 +613,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
 
                                                         //total
                                                         Text(
-                                                          'Total: ${units[index]*rates[index]}',
+                                                          'Total: ${total.toStringAsFixed(2)}',
                                                           style: const TextStyle(
                                                               fontSize: 15,
                                                               color: Colors.black,
@@ -887,14 +639,10 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                                       actions: [
                                                         // The "Yes" button
                                                         TextButton(
-                                                            onPressed: () {
+                                                            onPressed: () async {
+                                                              await deleteImage(itemSnapshot.data!.docs[index].get('imageLink'));
 
-                                                              productImages.removeAt(index);
-                                                              descriptions.removeAt(index);
-                                                              brandNames.removeAt(index);
-                                                              sizes.removeAt(index);
-                                                              units.removeAt(index);
-                                                              rates.removeAt(index);
+                                                              await deleteItem(itemSnapshot.data!.docs[index].id);
 
                                                               setState(() {
                                                                 Navigator.of(context).pop();
@@ -950,66 +698,154 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                     const SizedBox(height: 20,),
 
                     //Buttons
-                    if(descriptions.isNotEmpty)...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          //update Invoice Button
-                          SizedBox(
-                            height: 50,
-                            width: MediaQuery.of(context).size.width*0.5-30,
-                            child: ElevatedButton(
-                                onPressed: () async {
-                                  if(shippingMarkController.text.isEmpty){
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Fill in Shipping Mark'))
-                                    );
-                                  }
-                                  else {
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        //update Invoice Button
+                        SizedBox(
+                          height: 50,
+                          width: MediaQuery.of(context).size.width*0.5-30,
+                          child: ElevatedButton(
+                              onPressed: () async {
+                                if(shippingMarkController.text.isEmpty){
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Fill in Shipping Mark'))
+                                  );
+                                }
+                                else {
 
-                                    setState(() {
-                                      isLoading = true;
-                                    });
+                                  setState(() {
+                                    isLoading = true;
+                                  });
 
-                                    await updateInfo();
+                                  await updateInfo();
 
-                                    Get.to(
-                                        BottomBar(bottomIndex: 0),
-                                        transition: Transition.fade
-                                    );
-                                  }
-                                },
-                                style: ButtonStyle(
-                                  backgroundColor: MaterialStateColor.resolveWith(
-                                          (states) => Colors.deepOrangeAccent
-                                  ),
-                                  elevation:MaterialStateProperty.resolveWith<double>(
-                                        (Set<MaterialState> states) {
-                                      return 10.0;
-                                    },
-                                  ),
-                                  shape: MaterialStateProperty.all(
-                                      RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(5)
-                                      )
-                                  ),
+                                  Get.to(
+                                      BottomBar(bottomIndex: 0),
+                                      transition: Transition.fade
+                                  );
+                                }
+                              },
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateColor.resolveWith(
+                                        (states) => Colors.deepOrangeAccent
                                 ),
-                                child: const Text(
-                                  'Update Invoice',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.white
-                                  ),
-                                )
-                            ),
+                                elevation:MaterialStateProperty.resolveWith<double>(
+                                      (Set<MaterialState> states) {
+                                    return 10.0;
+                                  },
+                                ),
+                                shape: MaterialStateProperty.all(
+                                    RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5)
+                                    )
+                                ),
+                              ),
+                              child: const Text(
+                                'Update Invoice',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Colors.white
+                                ),
+                              )
                           ),
-                          const SizedBox(width: 10,),
-                          pdfBtn()
-                        ],
-                      )
-                    ],
+                        ),
+                        const SizedBox(width: 10,),
+                        SizedBox(
+                          height: 50,
+                          width: MediaQuery.of(context).size.width*0.5-30,
+                          child: ElevatedButton(
+                              onPressed: () async {
+                                final messenger = ScaffoldMessenger.of(context);
+
+                                if(shippingMarkController.text.isEmpty){
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Fill in Shipping Mark'))
+                                  );
+                                }
+                                else {
+                                  final invoice = Invoice(
+                                      supplier: Supplier(
+                                          name: shopName,
+                                          phoneNumber: phnNumber,
+                                          whatsAppNumber: '',
+                                          lineNumber: '',
+                                          viberNumber: ''
+                                      ),
+                                      customer: Customer(
+                                          shippingMark: shippingMarkController.text
+                                      ),
+                                      info: InvoiceInfo(
+                                        date: DateTime.now(),
+                                        dueDate: selectedDate,
+                                        number: widget.invoiceNumber.toString(), //invoice number
+                                      ),
+                                      items:
+                                      List.generate(
+                                        productDescriptions.length,
+                                            (index) {
+                                          return InvoiceItem(
+                                              description: productDescriptions[index],
+                                              brand: productBrandNames[index],
+                                              size: productSizes[index],
+                                              quantity: productUnits[index].toInt(),
+                                              unitPrice: productRates[index]
+                                          );
+                                        },
+                                      )
+                                  );
+                                  final pdfFile = await PdfInvoiceApi.generate(invoice, 'Invoice no.${widget.invoiceNumber}.pdf');
+
+                                  messenger.showSnackBar(
+                                      const SnackBar(
+                                          content: Text('Invoice Saved into Downloads Folder')
+                                      )
+                                  );
+
+                                  //PdfApi.openFile(pdfFile);
+                                  //final pdfFile = await PdfInvoiceApi.generate();
+
+                                  setState(() {
+                                    viewPdfFile = pdfFile;
+                                  });
+
+                                  Get.to(
+                                      ViewPDF(pdf: pdfFile),
+                                      transition: Transition.fade
+                                  );
+                                  //FileHandleApi.openFile(pdfFile);
+                                }
+                              },
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateColor.resolveWith(
+                                        (states) => Colors.deepOrangeAccent
+                                ),
+                                elevation:MaterialStateProperty.resolveWith<double>(
+                                      (Set<MaterialState> states) {
+                                    return 10.0;
+                                  },
+                                ),
+                                shape: MaterialStateProperty.all(
+                                    RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5)
+                                    )
+                                ),
+                              ),
+                              child: const Text(
+                                'Generate PDF',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Colors.white
+                                ),
+                              )
+                          ),
+                        )
+                      ],
+                    ),
 
                     if(viewPdfFile != null)...[
                       GestureDetector(
@@ -1101,105 +937,6 @@ class _ViewInvoiceState extends State<ViewInvoice> {
             overflow: TextOverflow.clip,
             color: Colors.black
         ),
-      ),
-    );
-  }
-
-  Widget pdfBtn() {
-    return SizedBox(
-      height: 50,
-      width: MediaQuery.of(context).size.width*0.5-30,
-      child: ElevatedButton(
-          onPressed: () async {
-            final messenger = ScaffoldMessenger.of(context);
-
-            if(shopSupplierImage?.path == null){
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Select Image First'))
-              );
-            }
-            else if(shippingMarkController.text.isEmpty){
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Fill in Shipping Mark'))
-              );
-            }
-            else {
-              final invoice = Invoice(
-                  supplier: const Supplier(
-                      name: 'Rana',
-                      phoneNumber: '01876678906',
-                      whatsAppNumber: '',
-                      lineNumber: '',
-                      viberNumber: ''
-                  ),
-                  customer: const Customer(
-                      shippingMark: 'Rana/Male'
-                  ),
-                  info: InvoiceInfo(
-                    date: DateTime.now(),
-                    dueDate: selectedDate,
-                    number: '4562', //invoice number
-                  ),
-                  items:
-                  List.generate(
-                    productImages.length,
-                        (index) {
-                      return InvoiceItem(
-                          description: descriptions[index],
-                          brand: brandNames[index],
-                          size: sizes[index],
-                          quantity: units[index].toInt(),
-                          unitPrice: rates[index]
-                      );
-                    },
-                  )
-              );
-              final pdfFile = await PdfInvoiceApi.generate(invoice);
-
-              messenger.showSnackBar(
-                  const SnackBar(
-                      content: Text('Invoice Saved into Downloads Folder')
-                  )
-              );
-
-              //PdfApi.openFile(pdfFile);
-              //final pdfFile = await PdfInvoiceApi.generate();
-
-              setState(() {
-                viewPdfFile = pdfFile;
-              });
-
-              Get.to(
-                  ViewPDF(pdf: pdfFile),
-                  transition: Transition.fade
-              );
-              //FileHandleApi.openFile(pdfFile);*/
-            }
-          },
-          style: ButtonStyle(
-            backgroundColor: MaterialStateColor.resolveWith(
-                    (states) => Colors.deepOrangeAccent
-            ),
-            elevation:MaterialStateProperty.resolveWith<double>(
-                  (Set<MaterialState> states) {
-                return 10.0;
-              },
-            ),
-            shape: MaterialStateProperty.all(
-                RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5)
-                )
-            ),
-          ),
-          child: const Text(
-            'Generate PDF',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Colors.white
-            ),
-          )
       ),
     );
   }
