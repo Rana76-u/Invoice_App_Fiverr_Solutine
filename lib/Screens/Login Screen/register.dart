@@ -115,15 +115,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     SharedPreferences prefs =
         await SharedPreferences.getInstance();
 
-    prefs.setString('vendorType', chosenVendorType);
-    prefs.setString('businessCardURL', imageLink);
-    prefs.setInt('invoiceNumber', 0);
-    prefs.setString('shopName', shopNameController.text);
-    prefs.setString('phoneNumber', phnNumberController.text);
-    prefs.setString('password', passwordController.text);
-    prefs.setString('whatsApp', whatsAppController.text);
-    prefs.setString('line', lineController.text);
-    prefs.setString('viber', viberController.text);
+    await prefs.setString('vendorType', chosenVendorType);
+    await prefs.setString('businessCardURL', imageLink);
+    await prefs.setInt('invoiceNumber', 0);
+    await prefs.setString('shopName', shopNameController.text);
+    await prefs.setString('phoneNumber', phnNumberController.text);
+    await prefs.setString('password', passwordController.text);
+    await prefs.setString('whatsApp', whatsAppController.text);
+    await prefs.setString('line', lineController.text);
+    await prefs.setString('viber', viberController.text);
   }
 
   @override

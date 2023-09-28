@@ -5,7 +5,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:invoice/Screens/CRUD%20Saved%20Invoice/view_invoice.dart';
-import 'package:invoice/Screens/Create%20Invoice/create_invoice.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -108,9 +107,12 @@ class _AddItemToSavedInvoicesState extends State<AddItemToSavedInvoices> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: isLoading ?
-          const Center(
-            child: LinearProgressIndicator(),
-          )
+      Center(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width*0.4,
+          child: const LinearProgressIndicator(),
+        ),
+      )
       :
       SingleChildScrollView(
         child: Padding(
@@ -124,7 +126,7 @@ class _AddItemToSavedInvoicesState extends State<AddItemToSavedInvoices> {
               GestureDetector(
                 onTap: () {
                   Get.to(
-                      const CreateInvoice(),
+                      ViewInvoice(invoiceNumber: widget.invoiceNumber),
                       transition: Transition.fade
                   );
                 },

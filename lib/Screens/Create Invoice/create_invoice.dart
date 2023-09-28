@@ -18,7 +18,9 @@ import '../../Components/model/invoice.dart';
 import 'package:image/image.dart' as img;
 
 class CreateInvoice extends StatefulWidget {
-  const CreateInvoice({super.key});
+  final String? shippingMark;
+  final DateTime? dateTime;
+  const CreateInvoice({super.key, this.shippingMark, this.dateTime});
 
   @override
   State<CreateInvoice> createState() => _CreateInvoiceState();
@@ -51,18 +53,23 @@ class _CreateInvoiceState extends State<CreateInvoice> {
     super.initState();
   }
 
-  void getLocallySavedData() async {
+  Future<void> getLocallySavedData() async {
     SharedPreferences prefs =
     await SharedPreferences.getInstance();
 
-    setState(() {
-      shippingMarkController.text = prefs.getString('shippingMark')!;
+    vendorType = prefs.getString('vendorType')!;
+    cardImageLink = prefs.getString('businessCardURL')!;
+    invoiceNumber = prefs.getInt('invoiceNumber')!;
+    shopName = prefs.getString('shopName')!;
+    phnNumber = prefs.getString('phoneNumber')!;
 
-      vendorType = prefs.getString('vendorType')!;
-      cardImageLink = prefs.getString('businessCardURL')!;
-      invoiceNumber = prefs.getInt('invoiceNumber')!;
-      shopName = prefs.getString('shopName')!;
-      phnNumber = prefs.getString('phoneNumber')!;
+    if(widget.shippingMark != null){
+      shippingMarkController.text = widget.shippingMark!;
+      selectedDate = widget.dateTime!;
+    }
+
+    setState(() {
+
     });
   }
 
@@ -196,6 +203,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,278 +216,8 @@ class _CreateInvoiceState extends State<CreateInvoice> {
           child: FittedBox(
             child: FloatingActionButton.extended(
               onPressed: () {
-                /*showModalBottomSheet(
-                  isScrollControlled: true,
-                    shape: const RoundedRectangleBorder( // <-- SEE HERE
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(22.0),
-                      ),
-                    ),
-                    context: context,
-                    builder: (BuildContext context){
-                      return FractionallySizedBox(
-                        heightFactor: 0.9,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 25),
-                          child: SizedBox(
-                            height: MediaQuery.of(context).size.height*0.55, //420
-                            child: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 25,),
-
-                                  textWidget('Product Description'),
-                                  Container(
-                                    width: double.infinity,
-                                    constraints: const BoxConstraints(
-                                      minHeight: 135,
-                                      maxHeight: 300,
-                                    ),
-                                    child: Card(
-                                      elevation: 3,
-                                      shadowColor: Colors.grey.shade50,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(5)
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(left: 10),
-                                        child: TextField(
-                                          maxLines: null,
-                                          keyboardType: TextInputType.multiline,
-                                          controller: descriptionController,
-                                          style: const TextStyle(
-                                            //fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                              overflow: TextOverflow.clip
-                                          ),
-                                          decoration: const InputDecoration(
-                                              hintText: 'Write description about product details . . . ',
-                                              border: OutlineInputBorder(
-                                                  borderSide: BorderSide.none
-                                              )
-                                          ),
-                                          cursorColor: Colors.green,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Product Brand'),
-                                  SizedBox(
-                                    height: 60,
-                                    child: TextField(
-                                      controller: brandController,
-                                      decoration: InputDecoration(
-                                        focusedBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        enabledBorder:  OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                            borderRadius: BorderRadius.circular(10)
-                                        ),
-                                        prefixIcon: const Icon(
-                                          Icons.abc,
-                                          color: Colors.grey,
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.grey[50],
-                                        hintText: "Enter Brand Name",
-                                      ),
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Size'),
-                                  SizedBox(
-                                    height: 60,
-                                    child: TextField(
-                                      controller: sizeController,
-                                      decoration: InputDecoration(
-                                        focusedBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        enabledBorder:  OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                            borderRadius: BorderRadius.circular(10)
-                                        ),
-                                        prefixIcon: const Icon(
-                                          Icons.onetwothree,
-                                          color: Colors.grey,
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.grey[50],
-                                        hintText: "Enter Size",
-                                      ),
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Unit/Quantity'),
-                                  SizedBox(
-                                    height: 60,
-                                    child: TextField(
-                                      controller: shippingMarkController,
-                                      decoration: InputDecoration(
-                                        focusedBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        enabledBorder:  OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                            borderRadius: BorderRadius.circular(10)
-                                        ),
-                                        prefixIcon: const Icon(
-                                          Icons.onetwothree,
-                                          color: Colors.grey,
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.grey[50],
-                                        hintText: "Enter Unit/Quantity",
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Rate'),
-                                  SizedBox(
-                                    height: 60,
-                                    child: TextField(
-                                      controller: shippingMarkController,
-                                      decoration: InputDecoration(
-                                        focusedBorder: const OutlineInputBorder(
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        enabledBorder:  OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                            borderRadius: BorderRadius.circular(10)
-                                        ),
-                                        prefixIcon: const Icon(
-                                          Icons.onetwothree,
-                                          color: Colors.grey,
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.grey[50],
-                                        hintText: "Enter Rate",
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 7,),
-
-                                  textWidget('Delivery Date'),
-                                  // Date Picker
-                                  SizedBox(
-                                    height: 50,
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                        onPressed: (){
-
-                                        },
-                                        style: ButtonStyle(
-                                          backgroundColor: MaterialStateColor.resolveWith(
-                                                  (states) => Colors.white
-                                          ),
-                                          shape: MaterialStateProperty.all(
-                                              RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(5),
-                                                side: BorderSide.none,
-                                              )
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            const Icon(
-                                                Icons.date_range,
-                                              color: Colors.grey,
-                                            ),
-                                            const SizedBox(width: 10,),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Select a day',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                    color: Colors.grey,
-                                                    fontWeight: FontWeight.bold
-                                                  ),
-                                                ),
-
-                                                GestureDetector(
-                                                  onTap: () => _selectDate(context),
-                                                  child: Text(
-                                                    '${selectedDate.toLocal()}'.split(' ')[0],
-                                                    style: const TextStyle(
-                                                        fontSize: 16,
-                                                        color: Colors.black,
-                                                        fontWeight: FontWeight.bold
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            )
-                                          ],
-                                        )
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 15,),
-
-                                  //Add Product Button
-                                  SizedBox(
-                                    height: 50,
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                        onPressed: (){
-
-                                        },
-                                        style: ButtonStyle(
-                                          backgroundColor: MaterialStateColor.resolveWith(
-                                                  (states) => Colors.deepOrangeAccent
-                                          ),
-                                          elevation:MaterialStateProperty.resolveWith<double>(
-                                                (Set<MaterialState> states) {
-                                              return 10.0;
-                                            },
-                                          ),
-                                          shape: MaterialStateProperty.all(
-                                              RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(5)
-                                              )
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Add',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: Colors.white
-                                          ),
-                                        )
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                );*/
                 Get.to(
-                    ProductDetailsScreen(),
+                    ProductDetailsScreen(shippingMark: shippingMarkController.text, dateTime: selectedDate),
                     transition: Transition.fade
                 );
               },
@@ -1181,41 +919,50 @@ class _CreateInvoiceState extends State<CreateInvoice> {
               );
             }
             else {
+              final userData =
+              await FirebaseFirestore
+                  .instance
+                  .collection('userData')
+                  .doc(phnNumber)
+                  .get();
+
+              invoiceNumber = await userData.get('invoiceNumber') + 1;
+
               final invoice = Invoice(
-                supplier: const Supplier(
-                  name: 'Rana',
-                  phoneNumber: '01876678906',
-                  whatsAppNumber: '',
-                  lineNumber: '',
-                  viberNumber: ''
-                ),
-                customer: const Customer(
-                  shippingMark: 'Rana/Male'
-                ),
-                info: InvoiceInfo(
-                  date: DateTime.now(),
-                  dueDate: selectedDate,
-                  number: '4562', //invoice number
-                ),
-                items:
-                List.generate(
-                  productImages.length,
-                  (index) {
-                    return InvoiceItem(
-                        description: descriptions[index],
-                        brand: brandNames[index],
-                        size: sizes[index],
-                        quantity: units[index].toInt(),
-                        unitPrice: rates[index]
-                    );
-                  },
-                )
+                  supplier: Supplier(
+                      name: shopName,
+                      phoneNumber: phnNumber,
+                      whatsAppNumber: '',
+                      lineNumber: '',
+                      viberNumber: ''
+                  ),
+                  customer: Customer(
+                      shippingMark: shippingMarkController.text
+                  ),
+                  info: InvoiceInfo(
+                    date: DateTime.now(),
+                    dueDate: selectedDate,
+                    number: invoiceNumber.toString(), //invoice number
+                  ),
+                  items:
+                  List.generate(
+                    productImages.length,
+                        (index) {
+                      return InvoiceItem(
+                          description: descriptions[index],
+                          brand: brandNames[index],
+                          size: sizes[index],
+                          quantity: units[index].toInt(),
+                          unitPrice: rates[index]
+                      );
+                    },
+                  )
               );
               final pdfFile = await PdfInvoiceApi.generate(invoice, 'my_invoice');
 
               messenger.showSnackBar(
                 const SnackBar(
-                    content: Text('Invoice Saved into Downloads Folder')
+                    content: Text("Invoice Saved into Downloads Folder. Named 'my_invoice'")
                 )
               );
 

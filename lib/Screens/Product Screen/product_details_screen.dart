@@ -9,14 +9,11 @@ import 'package:get/get.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   var selectedItemIndex;
+  final String? shippingMark;
+  final DateTime? dateTime;
   ProductDetailsScreen({
     super.key,
-    /*String? description,
-    String? brand,
-    String? size,
-    double? unit,
-    double? rate,*/
-    this.selectedItemIndex,
+    this.selectedItemIndex, this.shippingMark, this.dateTime,
   });
 
   @override
@@ -76,7 +73,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               GestureDetector(
                 onTap: () {
                   Get.to(
-                      const CreateInvoice(),
+                      CreateInvoice(shippingMark: widget.shippingMark, dateTime: widget.dateTime!,),
                       transition: Transition.fade
                   );
                 },
@@ -398,7 +395,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           units.insert(widget.selectedItemIndex, double.parse(unitController.text));
                           rates.insert(widget.selectedItemIndex, double.parse(rateController.text));
                           Get.to(
-                              const CreateInvoice(),
+                              CreateInvoice(shippingMark: widget.shippingMark, dateTime: widget.dateTime!,),
                               transition: Transition.fade
                           );
                         }
@@ -410,7 +407,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           units.add(double.parse(unitController.text));
                           rates.add(double.parse(rateController.text));
                           Get.to(
-                              const CreateInvoice(),
+                              CreateInvoice(shippingMark: widget.shippingMark, dateTime: widget.dateTime!,),
                               transition: Transition.fade
                           );
                         }

@@ -188,15 +188,15 @@ class _LoginState extends State<Login> {
                             SharedPreferences prefs =
                             await SharedPreferences.getInstance();
 
-                            prefs.setString('vendorType', vendorType);
-                            prefs.setString('businessCardURL', businessCardURL);
-                            prefs.setString('shopName', shopName);
-                            prefs.setString('phoneNumber', phnNumberController.text);
-                            prefs.setString('password', passwordController.text);
-                            prefs.setString('whatsApp', whatsApp);
-                            prefs.setString('line', line);
-                            prefs.setString('viber', viber);
-                            prefs.setInt('invoiceNumber', invoiceNumber);
+                            await prefs.setString('vendorType', vendorType);
+                            await prefs.setString('businessCardURL', businessCardURL);
+                            await prefs.setString('shopName', shopName);
+                            await prefs.setString('phoneNumber', phnNumberController.text);
+                            await prefs.setString('password', passwordController.text);
+                            await prefs.setString('whatsApp', whatsApp);
+                            await prefs.setString('line', line);
+                            await prefs.setString('viber', viber);
+                            await prefs.setInt('invoiceNumber', invoiceNumber);
 
                             Get.to(
                                 BottomBar(bottomIndex: 0),

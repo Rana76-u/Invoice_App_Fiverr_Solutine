@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     else {
       Get.to(
-          BottomBar(bottomIndex: 1),
+          BottomBar(bottomIndex: 0),
           transition: Transition.fade
       );
     }

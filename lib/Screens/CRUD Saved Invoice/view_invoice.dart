@@ -53,6 +53,9 @@ class _ViewInvoiceState extends State<ViewInvoice> {
   List<double> productUnits = [];
   List<double> productRates = [];
 
+  int items = 0;
+  double grandTotal = 0.0;
+
   @override
   void initState() {
     getLocallySavedData();
@@ -435,7 +438,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
 
                     const SizedBox(height: 15,),
 
-                    /*if(seeTotalTaped == false)...[
+                    if(seeTotalTaped == false)...[
                       TextButton(
                         onPressed: () {
                           setState(() {
@@ -457,12 +460,12 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            textWidget('Items ${descriptions.length}'),
-                            textWidget('Grand Total: $total'),
+                            textWidget('Items $items'),
+                            textWidget('Grand Total: $grandTotal'),
                           ],
                         ),
                       ),
-                    ],*/
+                    ],
 
                     FutureBuilder(
                       future: FirebaseFirestore
@@ -493,8 +496,12 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                     productRates.add(itemSnapshot.data!.docs[index].get('rate'));
                                     productSizes.add(itemSnapshot.data!.docs[index].get('size'));
 
-                                    total = total + (itemSnapshot.data!.docs[index].get('quantity') * itemSnapshot.data!.docs[index].get('rate'));
+                                    //total = total + (itemSnapshot.data!.docs[index].get('quantity') * itemSnapshot.data!.docs[index].get('rate'));
                                     //SchedulerBinding.instance.addPostFrameCallback((_) => setState(() {}));
+                                    total = itemSnapshot.data!.docs[index].get('quantity') * itemSnapshot.data!.docs[index].get('rate');
+
+                                    items = index;
+                                    grandTotal = grandTotal + total;
 
                                     return SizedBox(
                                       height: 150,

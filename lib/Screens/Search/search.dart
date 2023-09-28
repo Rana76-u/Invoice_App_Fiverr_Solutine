@@ -489,6 +489,7 @@ class _SearchPageState extends State<SearchPage> {
                             .collection('invoices')
                             .doc(_searchResults[index].id).get(), //'${invoiceNumber - index}'
                         builder: (context, snapshot) {
+                          print(_searchResults[index].id);
                           if(snapshot.hasData){
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 5),
@@ -508,7 +509,7 @@ class _SearchPageState extends State<SearchPage> {
                                 ),
                                 title: Text(snapshot.data!.get('shippingMark'),),
                                 subtitle: Text(
-                                    '${DateFormat('EE, dd MMM,yy').format(snapshot.data!.get('deliveryDate').toDate())}\nInvoice no. ${invoiceNumber - index}'
+                                    '${DateFormat('EE, dd MMM,yy').format(snapshot.data!.get('deliveryDate').toDate())}\nInvoice no. ${_searchResults[index].id}'
                                 ),
                                 trailing: const Icon(Icons.arrow_forward),
                                 tileColor: Colors.blue.shade50,
@@ -542,43 +543,59 @@ class _SearchPageState extends State<SearchPage> {
                         .collection('invoices')
                         .doc(numberController.text).get(), //'${invoiceNumber - index}'
                     builder: (context, snapshot) {
-                      if(snapshot.hasData){
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 5),
-                          child: ListTile(
-                            onTap: () {
-                              Get.to(
-                                  ViewInvoice(invoiceNumber: int.parse(numberController.text)), //invoiceNumber - index
-                                  transition: Transition.fade
-                              );
-                            },
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(7),
-                              child: Image.network(
-                                snapshot.data!.get('supplierImage'),
-                                fit: BoxFit.cover,
+                      try{
+                        if(snapshot.hasData){
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 5),
+                            child: ListTile(
+                              onTap: () {
+                                Get.to(
+                                    ViewInvoice(invoiceNumber: int.parse(numberController.text)), //invoiceNumber - index
+                                    transition: Transition.fade
+                                );
+                              },
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(7),
+                                child: Image.network(
+                                  snapshot.data!.get('supplierImage'),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              title: Text(snapshot.data!.get('shippingMark'),),
+                              subtitle: Text(
+                                  '${DateFormat('EE, dd MMM,yy').format(snapshot.data!.get('deliveryDate').toDate())}\nInvoice no. ${numberController.text}'
+                              ),
+                              trailing: const Icon(Icons.arrow_forward),
+                              tileColor: Colors.blue.shade50,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)
                               ),
                             ),
-                            title: Text(snapshot.data!.get('shippingMark'),),
-                            subtitle: Text(
-                                '${DateFormat('EE, dd MMM,yy').format(snapshot.data!.get('deliveryDate').toDate())}\nInvoice no. ${numberController.text}'
-                            ),
-                            trailing: const Icon(Icons.arrow_forward),
-                            tileColor: Colors.blue.shade50,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)
+                          );
+                        }
+                        else if (!snapshot.hasData || !snapshot.data!.exists) {
+                          return const Center(
+                            child: Text("Invoice number doesn't exist"),
+                          );
+                        }
+                        else if(snapshot.connectionState == ConnectionState.waiting){
+                          return const Center(
+                            child: LinearProgressIndicator(),
+                          );
+                        }
+                        else{
+                          return const Center(
+                            child: Text('Error Loading Data'),
+                          );
+                        }
+                      } catch (e) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 50),
+                            child: Text(
+                                "Invoice number doesn't exist",
                             ),
                           ),
-                        );
-                      }
-                      else if(snapshot.connectionState == ConnectionState.waiting){
-                        return const Center(
-                          child: LinearProgressIndicator(),
-                        );
-                      }
-                      else{
-                        return const Center(
-                          child: Text('Error Loading Data'),
                         );
                       }
                     },
