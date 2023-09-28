@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:invoice/Components/bottom_nav_bar.dart';
 import 'package:invoice/Screens/Create%20Invoice/create_invoice.dart';
 import 'package:get/get.dart';
+import 'package:invoice/Screens/Search/search.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../CRUD Saved Invoice/view_invoice.dart';
@@ -195,10 +196,18 @@ class _HomeState extends State<Home> {
 
                 //More Button
                 if(invoiceNumber != 0)...[
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 15),
-                        child: subTextWidget('Show More')
+                  GestureDetector(
+                    onTap: () {
+                      Get.to(
+                        const SearchPage(),
+                        transition: Transition.fade
+                      );
+                    },
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 15),
+                          child: subTextWidget('Show More')
+                      ),
                     ),
                   ),
                 ]

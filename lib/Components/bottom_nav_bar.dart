@@ -2,6 +2,7 @@ import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
 import 'package:invoice/Screens/Home/home.dart';
 import 'package:invoice/Screens/Profile/profile.dart';
+import 'package:invoice/Screens/Search/search.dart';
 
 // ignore: must_be_immutable
 class BottomBar extends StatefulWidget {
@@ -22,7 +23,7 @@ class _BottomBarState extends State<BottomBar> {
       return const Home();
     }else if(widget.bottomIndex == 1){
       previousIndex = 1;
-      return const Placeholder();
+      return const SearchPage();
     }else if(widget.bottomIndex == 2){
       previousIndex = 2;
       return const Profile();
