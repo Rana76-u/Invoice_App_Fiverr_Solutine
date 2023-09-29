@@ -958,7 +958,7 @@ class _CreateInvoiceState extends State<CreateInvoice> {
                     },
                   )
               );
-              final pdfFile = await PdfInvoiceApi.generate(invoice, 'my_invoice');
+              final pdfFile = await PdfInvoiceApi.generate(invoice, 'my_invoice.pdf');
 
               messenger.showSnackBar(
                 const SnackBar(

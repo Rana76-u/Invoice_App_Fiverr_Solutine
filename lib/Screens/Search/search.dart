@@ -489,7 +489,6 @@ class _SearchPageState extends State<SearchPage> {
                             .collection('invoices')
                             .doc(_searchResults[index].id).get(), //'${invoiceNumber - index}'
                         builder: (context, snapshot) {
-                          print(_searchResults[index].id);
                           if(snapshot.hasData){
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 5),

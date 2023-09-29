@@ -99,7 +99,7 @@ class _HomeState extends State<Home> {
             child: FloatingActionButton.extended(
               onPressed: () {
                 Get.to(
-                  CreateInvoice(),
+                  const CreateInvoice(),
                   transition: Transition.fade,
                 );
               },
